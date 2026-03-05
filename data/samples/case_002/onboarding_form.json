@@ -1,0 +1,67 @@
+{
+  "business_hours": {
+    "timezone": "America/Chicago",
+    "monday":    { "open": "08:00", "close": "17:30", "closed": false },
+    "tuesday":   { "open": "08:00", "close": "17:30", "closed": false },
+    "wednesday": { "open": "08:00", "close": "17:30", "closed": false },
+    "thursday":  { "open": "08:00", "close": "17:30", "closed": false },
+    "friday":    { "open": "08:00", "close": "17:00", "closed": false },
+    "saturday":  { "open": null, "close": null, "closed": true },
+    "sunday":    { "open": null, "close": null, "closed": true },
+    "notes": "Friday closes 30 minutes early. No holiday exceptions — managed manually."
+  },
+  "emergency_definitions": [
+    {
+      "type": "hvac_critical_failure",
+      "description": "Complete HVAC failure in a critical environment — server room, hospital, restaurant walk-in",
+      "keywords": ["server room", "refrigeration down", "hospital", "cooling failure", "system down"],
+      "collect_before_transfer": ["name", "phone", "address"],
+      "transfer_target_name": "After-Hours Dispatch Center",
+      "transfer_target_phone": "214-555-0192",
+      "transfer_target_type": "dispatch",
+      "transfer_timeout_seconds": 45,
+      "fallback_on_timeout": "I wasn't able to reach our dispatch team. Your information has been recorded and an on-call technician will contact you within 30 minutes."
+    },
+    {
+      "type": "hvac_extreme_weather_failure",
+      "description": "Complete AC or heating failure during extreme weather conditions (heat wave or freeze)",
+      "keywords": ["no air conditioning", "heat is out", "freezing inside", "AC is off", "heating system failed"],
+      "collect_before_transfer": ["name", "phone", "address"],
+      "transfer_target_name": "After-Hours Dispatch Center",
+      "transfer_target_phone": "214-555-0192",
+      "transfer_target_type": "dispatch",
+      "transfer_timeout_seconds": 45,
+      "fallback_on_timeout": "I wasn't able to reach our dispatch team. Your information has been recorded and someone will contact you shortly."
+    }
+  ],
+  "non_emergency_routing": {
+    "business_hours_action": "transfer",
+    "business_hours_target_name": "Arctic HVAC Main Office",
+    "business_hours_target_phone": "214-555-0150",
+    "after_hours_action": "collect_and_callback",
+    "collect_fields": ["name", "phone", "description"],
+    "callback_promise": "the next business day"
+  },
+  "integration_constraints": [
+    {
+      "system": "ServiceTrade",
+      "rule_description": "Automatically create service requests for maintenance and inspection calls. Do not auto-create emergency repair jobs — those must be manually entered by the dispatcher.",
+      "job_types_excluded": ["emergency_repair", "emergency_service"],
+      "job_types_auto_create": ["maintenance_request", "inspection_scheduling", "estimate_request"]
+    }
+  ],
+  "special_rules": [
+    "Never route billing or payment questions to the on-call technician — even after hours.",
+    "If caller mentions a life-threatening situation (fire, gas smell), instruct them to call 911 immediately.",
+    "Do not promise specific technician arrival times unless dispatch confirms."
+  ],
+  "overrides_from_demo": [
+    {
+      "field": "business_hours.friday.close",
+      "demo_assumption": "17:00",
+      "confirmed_value": "17:00",
+      "reason": "Friday is consistent — no change needed"
+    }
+  ],
+  "questions_or_unknowns": []
+}

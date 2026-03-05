@@ -1,0 +1,46 @@
+DEMO CALL TRANSCRIPT — Arctic HVAC Services
+Date: 2026-02-20
+Participants: Clara Sales Rep (Rep), Client (Diana Reyes, Operations Manager)
+
+---
+
+Rep: Hi Diana, thanks for your time today. Tell me about Arctic HVAC and what's bringing you to look at Clara.
+
+Diana: Hi! So Arctic HVAC is a commercial HVAC company. We do installation, maintenance contracts, and emergency repairs for commercial buildings — offices, retail, that kind of thing. We're based in Dallas.
+
+Rep: And what's your main challenge right now with call handling?
+
+Diana: Two things. One — we have a lot of calls coming in during business hours that our small admin team just can't keep up with. People end up on hold too long and hang up. Two — we get emergency calls at night, like an HVAC system failing in a building with a server room or a restaurant that can't let their walk-in cooler go down. Those need to get to our on-call technician fast.
+
+Rep: What does an emergency look like for you?
+
+Diana: Any HVAC failure in a critical environment — server rooms, hospitals, restaurants. Also complete system failures in extreme weather. Like if it's 105 degrees outside and the AC in a building goes out, that's a life safety issue.
+
+Rep: Do you route those to a single person or a team?
+
+Diana: We have an on-call rotation. It changes week to week. But there's always someone. We use a dispatch service after hours.
+
+Rep: Are you using any field management software?
+
+Diana: We use ServiceTrade, yes.
+
+Rep: What are your business hours?
+
+Diana: Standard hours — weekdays, roughly 8 to 5. I'll need to confirm the exact times.
+
+Rep: Do you have any after-hours handling currently?
+
+Diana: Right now we forward to an answering service but it's not great. They just take a message and email us. Half the time our guys don't see it until morning.
+
+[Demo plays]
+
+Diana: I love that it can distinguish between an emergency and a non-emergency before deciding what to do. That's exactly what our answering service fails at — they treat everything the same.
+
+Rep: Great feedback. Is there anything that should never go to your emergency line?
+
+Diana: Billing questions, scheduling, anything routine. Even if someone calls at midnight asking about scheduling a maintenance visit, that should not go to our on-call tech. He'll lose his mind.
+
+Rep: Totally understood. We'll make sure non-emergencies after hours just get collected and followed up.
+
+---
+END OF TRANSCRIPT

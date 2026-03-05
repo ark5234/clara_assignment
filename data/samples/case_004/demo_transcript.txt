@@ -1,0 +1,52 @@
+DEMO CALL TRANSCRIPT — Case 004
+Company: Summit Sprinkler Systems
+Industry: Fire Protection (Wet/Dry Pipe Sprinkler Systems)
+Date: 2024-03-15
+
+[CLARA]: Thank you for calling. This is Clara. I'm helping gather information to set up your AI phone agent. Am I speaking with someone from Summit Sprinkler Systems?
+
+[CLIENT — Mike Torres, Operations Manager]: Yeah, that's right. I'm Mike Torres, operations manager here at Summit.
+
+[CLARA]: Great, Mike. And just to confirm — Summit is a sprinkler installation and service company?
+
+[MIKE]: Correct. We do wet pipe, dry pipe, pre-action, and deluge systems. Mostly commercial clients — warehouses, manufacturing, some light industrial. We're based out of Denver, Colorado.
+
+[CLARA]: Understood. What's your main office address?
+
+[MIKE]: We're at 4400 Peoria Street, Unit 12, Denver, CO 80239.
+
+[CLARA]: Got it. And what types of emergency calls do you handle after hours?
+
+[MIKE]: Anything where a system has discharged or is actively leaking. That's our top priority — you've got a sprinkler head that's gone off accidentally, or a pipe burst during a cold snap, water is actively coming out somewhere. That's a true emergency. We want someone paged immediately.
+
+[CLARA]: And what should Clara say or ask before transferring, to help your on-call tech?
+
+[MIKE]: We need: the address of the property where it happened, the caller's name and phone, and whether water is still flowing or if it's been shut off already.
+
+[CLARA]: Perfect. And who do you page for after-hours emergencies?
+
+[MIKE]: We have a rotating on-call line — the number is (720) 555-0182. That rings to whoever is on-call that week.
+
+[CLARA]: What if she can't connect to that line?
+
+[MIKE]: If no answer after 60 seconds, she should tell the caller that we're having trouble reaching the on-call technician but their information has been logged and someone will call them back within 15 minutes. And honestly, if it's an active discharge, they should call the fire department first.
+
+[CLARA]: That's helpful. What are your regular business hours?
+
+[MIKE]: Monday to Friday, 7 AM to 5 PM Mountain Time. We're closed weekends.
+
+[CLARA]: Got it. During business hours, what should Clara do with regular service calls?
+
+[MIKE]: Transfer them to our main office — (303) 555-0140. That's our service coordinator line.
+
+[CLARA]: And non-emergency after-hours, like someone wanting to schedule an inspection?
+
+[MIKE]: Take a message. Name, phone, best time to reach them, and what they need. We'll call back next business day.
+
+[CLARA]: Do you use any service management software?
+
+[MIKE]: FieldEdge. But don't worry about syncing anything automatically — the girls in the office handle all the FieldEdge entries. Just get the info from the caller.
+
+[CLARA]: One last thing — are there any calls Clara should never try to handle herself?
+
+[MIKE]: Don't quote prices. Don't make commitments on emergency response time beyond "we take all emergencies seriously and our on-call tech will be with you as soon as possible." And if anyone asks about insurance claim status, transfer to the office — we have a billing person who handles all that.

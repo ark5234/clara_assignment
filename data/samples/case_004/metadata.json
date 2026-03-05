@@ -1,0 +1,12 @@
+{
+  "case_id": "case_004",
+  "company_name": "Summit Sprinkler Systems",
+  "industry": "fire_protection",
+  "contact": {
+    "primary_name": "Mike Torres",
+    "title": "Operations Manager",
+    "phone": "(303) 555-0140",
+    "email": "mike@summitsprinkler.com",
+    "office_address": "4400 Peoria Street, Unit 12, Denver, CO 80239"
+  }
+}

@@ -1,0 +1,13 @@
+# Core
+openai>=1.0.0          # Used as the universal client (Gemini/Groq/Ollama all use the OpenAI-compatible API)
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+click>=8.1.0
+rich>=13.0.0
+
+# Optional: faster JSON diff display
+deepdiff>=6.0.0
+
+# Optional: local transcription (requires whisper model download ~1-2 GB)
+# openai-whisper>=20230314
+# torch>=2.0.0  # required by whisper

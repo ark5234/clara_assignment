@@ -1,0 +1,51 @@
+ONBOARDING CALL TRANSCRIPT — Case 004
+Company: Summit Sprinkler Systems
+Date: 2024-03-22
+
+[CLARA]: Hi Mike, welcome to the onboarding call. We're going to lock in all the details for Summit Sprinkler's AI agent today. I'll go through the key fields with you to confirm everything.
+
+[MIKE]: Sure, let's do it.
+
+[CLARA]: Great. First — business hours. We had Monday to Friday, 7 AM to 5 PM Mountain. Is that still correct?
+
+[MIKE]: Actually, we extended Fridays — we close at 3 PM on Fridays now. And we're also open Saturday mornings, 8 AM to noon, for emergency service call pick-ups.
+
+[CLARA]: Got it. So Monday through Thursday, 7 to 5. Friday, 7 to 3. Saturday, 8 to noon. All Mountain Time?
+
+[MIKE]: Yep.
+
+[CLARA]: On emergencies — we had active discharge or leaking. Anything to add?
+
+[MIKE]: Yeah, add this — if it's a pre-action or deluge system and the dry-side pressure drops below normal, that counts as an emergency too. Customers might describe it as "the panel is alarming" or "I'm seeing a fault light." That means potential system failure, needs same-day response.
+
+[CLARA]: Understood. And for collecting information before transfer — name, phone, address, and whether water is flowing. Should we also ask about the system type?
+
+[MIKE]: Yes, add that. Ask: "Do you know what type of system you have — wet pipe, dry pipe, or another type?" It helps the tech prepare.
+
+[CLARA]: Perfect. On-call number stays the same at (720) 555-0182?
+
+[MIKE]: Yes, that's not changing.
+
+[CLARA]: The fallback message — we had "call back within 15 minutes" and recommend contacting fire department for active discharge. Do you want to keep that?
+
+[MIKE]: Keep it word for word.
+
+[CLARA]: And the main service coordinator line is still (303) 555-0140?
+
+[MIKE]: Still the same.
+
+[CLARA]: For non-emergency after-hours, we had: collect name, phone, preferred callback time, and description of need. Any changes?
+
+[MIKE]: Add the property address too. We sometimes need to look it up in FieldEdge before calling back.
+
+[CLARA]: Got it. Last thing — any new restrictions or sensitive topics to add?
+
+[MIKE]: One thing: if a caller mentions they're an attorney or mentions "litigation" or "lawsuit," do not try to help them. Transfer to the office and say "Our team will be happy to assist you directly." That's important.
+
+[CLARA]: Noted. Anything else?
+
+[MIKE]: No, I think that covers it. How long until the agent goes live?
+
+[CLARA]: We'll have your configuration ready to review within 24 hours. You'll receive a prompt document and a configuration summary to confirm before we activate.
+
+[MIKE]: Perfect. Thanks.

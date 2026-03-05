@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment / secrets
+.env
+*.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Outputs (generated artifacts — not source controlled)
+outputs/
+
+# Large media files — stored in data/recordings/ but excluded from git
+# to keep the repo lightweight. Store recordings separately (cloud drive, etc.)
+data/recordings/
+
+# Zoom raw folder (the original recording dump folder)
+2026-01-14*/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs
+*.log
+logs/

@@ -1,0 +1,50 @@
+{
+  "case_id": "case_005",
+  "source": "onboarding_form",
+  "company_name": "Guardian Alarm & Security",
+  "business_hours": {
+    "monday": { "open": "08:00", "close": "18:00" },
+    "tuesday": { "open": "08:00", "close": "18:00" },
+    "wednesday": { "open": "08:00", "close": "18:00" },
+    "thursday": { "open": "08:00", "close": "18:00" },
+    "friday": { "open": "08:00", "close": "18:00" },
+    "saturday": "closed",
+    "sunday": "closed",
+    "timezone": "MST",
+    "notes": "Arizona does not observe Daylight Saving Time — always MST"
+  },
+  "emergency_types": [
+    {
+      "type": "active_fire_alarm",
+      "description": "Customer's fire alarm is in alert state — may be real fire or false alarm",
+      "keywords": ["fire alarm", "alarm going off", "smoke detector", "sprinkler activated"],
+      "collect": ["name", "phone", "address", "is_911_called", "alarm_type"],
+      "transfer_to": "(602) 555-0177",
+      "timeout": 40,
+      "fallback": "I wasn't able to reach our on-call technician right now. Your information has been recorded and someone will call you within 20 minutes. If this is a real fire or life-threatening emergency, please call 911 immediately."
+    },
+    {
+      "type": "access_control_failure",
+      "description": "Commercial access control door won't lock or unlock — security risk or lockout",
+      "keywords": ["door won't open", "access card not working", "door stuck", "locked out", "can't lock up"],
+      "collect": ["name", "phone", "address", "issue_description"],
+      "transfer_to": "(602) 555-0177",
+      "timeout": 40,
+      "fallback": "I wasn't able to reach our on-call technician right now. Your information has been recorded and someone will call you within 20 minutes."
+    }
+  ],
+  "main_office_phone": "(602) 555-0140",
+  "sales_line": "(602) 555-0198",
+  "integration": {
+    "system": "ServiceTitan",
+    "auto_create_jobs": false,
+    "note": "Agent captures info only — dispatch team creates service tickets manually"
+  },
+  "special_rules": [
+    "Never discuss pricing or provide cost estimates",
+    "Never confirm or deny whether a specific address is monitored",
+    "If caller mentions legal matter or litigation, transfer to office immediately",
+    "False alarm callers: walk through panel reset steps before transfer"
+  ],
+  "confirmed": true
+}

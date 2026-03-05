@@ -1,0 +1,211 @@
+{
+  "meta": {
+    "instanceId": "clara-ai-pipeline-v1",
+    "description": "Clara AI Voice Agent Pipeline — processes demo and onboarding inputs, generates account memos, Retell specs, and changelogs"
+  },
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Trigger: File Watch (Demo Transcript)",
+      "type": "n8n-nodes-base.localFileTrigger",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "parameters": {
+        "path": "data/samples/",
+        "events": ["add"],
+        "includeHidden": false,
+        "watchFor": "files",
+        "filePattern": "*/demo_transcript.txt"
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Extract Case ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [420, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "case_id",
+              "name": "case_id",
+              "value": "={{ $json.path.split('/').slice(-2)[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "transcript_path",
+              "name": "transcript_path",
+              "value": "={{ $json.path }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Run Demo Pipeline",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [640, 200],
+      "parameters": {
+        "command": "python main.py demo --case-id {{ $json.case_id }} --file {{ $json.transcript_path }}"
+      },
+      "notes": "Runs the Clara demo processor. Requires Python + venv activated."
+    },
+    {
+      "id": "n4",
+      "name": "Run Onboarding Pipeline (Transcript)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [640, 380],
+      "parameters": {
+        "command": "python main.py onboard --case-id {{ $json.case_id }} --file data/samples/{{ $json.case_id }}/onboarding_transcript.txt"
+      },
+      "notes": "Only executes if onboarding_transcript.txt exists."
+    },
+    {
+      "id": "n5",
+      "name": "Check Onboarding File Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [860, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.stdout }}",
+              "rightValue": "ok",
+              "operator": { "type": "string", "operation": "contains" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "n6",
+      "name": "Generate Changelog (Diff)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1080, 300],
+      "parameters": {
+        "command": "python main.py diff --case-id {{ $json.case_id }}"
+      },
+      "notes": "Produces changelog/changes.json and changelog/changes.md when both v1 and v2 exist."
+    },
+    {
+      "id": "n7",
+      "name": "Load pipeline result JSON",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [1300, 300],
+      "parameters": {
+        "operation": "read",
+        "fileName": "outputs/accounts/{{ $json.case_id }}/v2/account_memo.json"
+      },
+      "notes": "Loads the final AccountMemo for downstream use (e.g. Slack notification, CRM push)."
+    },
+    {
+      "id": "n8",
+      "name": "Log Task to Tracker",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1500, 300],
+      "parameters": {
+        "command": "python -c \"from utils.task_tracker import TaskTracker; TaskTracker().log_task('{{ $json.case_id }}','v2','n8n_trigger')\""
+      }
+    },
+    {
+      "id": "n9",
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1300, 500],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error_msg",
+              "name": "error_message",
+              "value": "={{ $json.stderr || $json.error }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "notes": "Captures any pipeline error for logging or alerting."
+    },
+    {
+      "id": "n10",
+      "name": "Batch: Run All Cases",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [200, 600],
+      "parameters": {
+        "command": "python main.py batch --cases-dir data/samples/"
+      },
+      "notes": "Alternative trigger: runs the full batch pipeline for all cases in data/samples/. Wire this to a Schedule trigger for recurring runs."
+    },
+    {
+      "id": "n11",
+      "name": "Schedule Trigger (Batch)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [0, 600],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "notes": "Runs the batch pipeline once per day. Disable if using file trigger only."
+    }
+  ],
+  "connections": {
+    "Trigger: File Watch (Demo Transcript)": {
+      "main": [[{ "node": "Extract Case ID", "type": "main", "index": 0 }]]
+    },
+    "Extract Case ID": {
+      "main": [[{ "node": "Run Demo Pipeline", "type": "main", "index": 0 }]]
+    },
+    "Run Demo Pipeline": {
+      "main": [[{ "node": "Check Onboarding File Exists", "type": "main", "index": 0 }]]
+    },
+    "Check Onboarding File Exists": {
+      "main": [
+        [{ "node": "Run Onboarding Pipeline (Transcript)", "type": "main", "index": 0 }],
+        [{ "node": "Error Handler", "type": "main", "index": 0 }]
+      ]
+    },
+    "Run Onboarding Pipeline (Transcript)": {
+      "main": [[{ "node": "Generate Changelog (Diff)", "type": "main", "index": 0 }]]
+    },
+    "Generate Changelog (Diff)": {
+      "main": [[{ "node": "Load pipeline result JSON", "type": "main", "index": 0 }]]
+    },
+    "Load pipeline result JSON": {
+      "main": [[{ "node": "Log Task to Tracker", "type": "main", "index": 0 }]]
+    },
+    "Schedule Trigger (Batch)": {
+      "main": [[{ "node": "Batch: Run All Cases", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "_clara_import_instructions": {
+    "step_1": "Open n8n — go to Workflows → Import from file",
+    "step_2": "Select this file: workflows/n8n_workflow.json",
+    "step_3": "Review the 'Execute Command' nodes — ensure Python is in the PATH used by n8n",
+    "step_4": "If running n8n as a service, activate the venv in the command: source .venv/bin/activate && python main.py ...",
+    "step_5": "Set the 'Schedule Trigger' to your desired frequency or disable it and use only the file trigger",
+    "step_6": "Activate the workflow — it will trigger on any new demo_transcript.txt added to data/samples/"
+  }
+}

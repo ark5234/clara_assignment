@@ -1,0 +1,48 @@
+ONBOARDING CALL TRANSCRIPT — Electra Electrical Services
+Date: 2026-03-04
+Participants: Clara Onboarding Specialist (OS), Client (Tom Vasquez)
+
+---
+
+OS: Hi Tom, let's get everything locked down for your Clara configuration. Starting with hours — your demo had 7 to 4, Monday through Friday. Can you confirm that and the timezone?
+
+Tom: Actually, I need to correct that. We updated our hours. We're now 7:30 AM to 5:00 PM, Monday through Friday. Mountain Time — so America/Denver.
+
+OS: Got it — updating from 07:00-16:00 to 07:30-17:00, Mountain Time. Good catch. Are you open Saturdays at all?
+
+Tom: No, closed weekends.
+
+OS: Emergency definitions — demo mentioned power outages, electrical fires, exposed live wires. Can you be more specific on each?
+
+Tom: Power outage is when a full building or large section of a building has lost power and they can't restore it themselves. Electrical fire means there's visible burning, sparking, or smoke coming from an electrical panel or outlet — those need 911 first, then us. Exposed live wires means someone can see bare electrical conductors posing an immediate hazard. Those are the three categories.
+
+OS: Got it. And you mentioned the triage step — wanting Clara to ask what's happening and help with tripped breakers before escalating?
+
+Tom: Yes. If someone says they have "no power" or "lights are off," Clara should ask whether they've checked their breaker panel and tried resetting. If that resolves it, great. If not — or if they report fire or sparks — then it's an emergency.
+
+OS: Clear. Now your dispatch number — in the demo you mentioned 555-0200 was changing. What's the new permanent number?
+
+Tom: The new number, effective March 15, is 720-555-0314. Use that one. The old number will stop working after that date.
+
+OS: Confirmed — new emergency dispatch number is 720-555-0314. Transfer timeout — you said 30 seconds in the demo. Still correct?
+
+Tom: Yes, 30 seconds. If nobody picks up, tell the caller we couldn't reach dispatch and that someone will call back within 15 minutes. But also tell them if it's a fire or shock hazard, call 911 now.
+
+OS: Got it. Non-emergency after hours?
+
+Tom: Collect name, number, and description. Tell them we'll call back first thing next business day. Don't transfer anything non-emergency.
+
+OS: Any integration system?
+
+Tom: We just signed with ServiceTrade actually — we start onboarding next quarter. No constraints to set yet, but it will be coming.
+
+OS: I'll note ServiceTrade as pending — we'll revisit constraints in a follow-up onboarding update. Any other special rules?
+
+Tom: Yes — if someone mentions they think there's carbon monoxide, tell them to leave the building immediately and call 911. We don't handle that, that's a gas company issue.
+
+OS: Absolutely — safety escalation to 911. Got it. I think that's everything. I'll send you the config for review before we go live.
+
+Tom: Perfect, thanks.
+
+---
+END OF TRANSCRIPT

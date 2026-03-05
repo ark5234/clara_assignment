@@ -1,0 +1,33 @@
+# Demo Transcript — Case 006: G&M Pressure Washing
+# Status: PENDING TRANSCRIPTION
+#
+# Source recording: data/recordings/case_006/demo_call_video.mp4
+# Audio: data/recordings/case_006/demo_call_audio.m4a
+# Recorded: 2026-01-14 (Clara Product demo call)
+#
+# Known contact info from Zoom chat:
+#   Company:  G&M Pressure Washing
+#   Contact:  Shelley Manley
+#   Phone:    403-870-8494
+#   Email:    gm_pressurewash@yahoo.ca
+#   (Also shared: info@benselectricsolutionsteam.com)
+#
+# TO GENERATE TRANSCRIPT:
+#   Option A (Whisper local):
+#     pip install openai-whisper
+#     whisper data/recordings/case_006/demo_call_audio.m4a --model base --output_dir data/samples/case_006/ --output_format txt
+#     Then rename the output file to demo_transcript.txt
+#
+#   Option B (AssemblyAI / Deepgram free tier):
+#     Upload data/recordings/case_006/demo_call_audio.m4a
+#     Download transcript as plain text
+#     Save as: data/samples/case_006/demo_transcript.txt
+#
+#   Option C (Retell transcription):
+#     Use the Retell dashboard transcription tool if available.
+#
+# Once demo_transcript.txt is populated, run:
+#   python main.py demo --case-id case_006 --transcript data/samples/case_006/demo_transcript.txt
+#
+
+TRANSCRIPT PENDING — replace this file with the actual transcript text.

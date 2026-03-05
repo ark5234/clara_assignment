@@ -1,0 +1,64 @@
+ONBOARDING CALL TRANSCRIPT — Premier Fire Protection
+Date: 2026-02-28
+Participants: Clara Onboarding Specialist (OS), Client (Mike Harmon)
+
+---
+
+OS: Hi Mike, congratulations on moving forward! Today we're going to lock down your exact configuration so Clara is ready to go live. Let's start with business hours. What are your exact hours and timezone?
+
+Mike: We're Monday through Friday, 7:30 AM to 5:00 PM Central Time. Closed Saturday and Sunday.
+
+OS: Perfect. So America/Chicago timezone, 7:30 to 17:00 Monday through Friday. Got it. What about holidays?
+
+Mike: We close for major federal holidays — New Year's, Memorial Day, Fourth of July, Labor Day, Thanksgiving, Christmas. I don't need Clara to track all of those though, we'll just update the Retell schedule manually when they come up.
+
+OS: No problem, we'll note that. Now let's talk about emergencies. What exactly counts as an emergency?
+
+Mike: Three situations: one — active sprinkler leak, meaning water is actively coming out from a head or a pipe. Two — triggered fire alarm, meaning the alarm is going off and won't reset. Three — a suppression system that has been activated or discharged. Those three are the only ones that go to our emergency line immediately.
+
+OS: And the emergency line — what's the number for that?
+
+Mike: It's our on-call phone tree. The number is 512-555-0147. If you call that number and nobody picks up within 60 seconds, I want Clara to let the caller know she couldn't connect them, take their info, and notify dispatch.
+
+OS: Got it — 512-555-0147, 60-second timeout, fallback is notify dispatch and assure callback. What's "notify dispatch" look like — should Clara say something specific?
+
+Mike: Just have her say something like "I wasn't able to reach our emergency team. I've recorded your information and our dispatcher has been notified. Someone will call you back within 30 minutes." We'll handle the actual dispatch ping separately in our system.
+
+OS: Understood. And for emergencies — what info should she collect before transferring?
+
+Mike: Name, callback number, and the address where the issue is. In that order.
+
+OS: Great. Now for non-emergencies during business hours — where do those calls go?
+
+Mike: Just transfer to our main office line. That's 512-555-0100. Sarah handles that.
+
+OS: And non-emergencies after hours?
+
+Mike: Take a message. Get their name, number, and a brief description of what they need. Tell them we'll call back during business hours. Don't transfer anything non-emergency after hours.
+
+OS: Perfect. Now let me ask about ServiceTrade. Any rules on what gets auto-created?
+
+Mike: Yes, this is important. Never — and I mean never — auto-create a ServiceTrade job for sprinkler system calls. Our sprinkler guys handle job creation manually because there are liability issues with how those get categorized. But inspection requests — if someone calls to schedule an inspection — yes, those can go into ServiceTrade automatically.
+
+OS: Confirmed: no auto-create for sprinkler jobs, auto-create allowed for inspection requests. Anything else on ServiceTrade?
+
+Mike: Same rule applies to fire alarm repair jobs. Those should not be auto-created either. Too many variables.
+
+OS: Got it — adding fire alarm repair to the excluded list. Any other special rules?
+
+Mike: One more thing — if someone calls after hours and it becomes clear they're in actual physical danger, like there's a fire actively going on, Clara should always tell them to call 911 immediately. That overrides everything else.
+
+OS: Absolutely — that's a standard safety rule we include by default. I'll make it explicit in your config.
+
+Mike: Perfect.
+
+OS: Let me confirm what I have so far, and then we'll move on...
+
+[Confirmation exchange — both parties agree details are correct]
+
+OS: Great, Mike. Your Clara agent should be live within 24-48 hours. You'll get a test number to call before we go live.
+
+Mike: Sounds great. Thanks.
+
+---
+END OF TRANSCRIPT

@@ -1,0 +1,56 @@
+DEMO CALL TRANSCRIPT — Electra Electrical Services
+Date: 2026-02-22
+Participants: Clara Sales Rep (Rep), Client (Tom Vasquez, General Manager)
+
+---
+
+Rep: Hi Tom, tell me about Electra Electrical and what's driving your interest in Clara.
+
+Tom: Sure. We do commercial and industrial electrical work — panel work, emergency repairs, code compliance, that kind of thing. Our biggest issue is after-hours calls. We have crews on-call 24/7 but the communication between the caller and the crew is terrible right now.
+
+Rep: What goes wrong?
+
+Tom: Someone calls saying they have a power outage. It goes to our after-hours line, the crew doesn't always pick up, the caller gets frustrated. We lose jobs to competitors because we're too slow to respond.
+
+Rep: What counts as an emergency for you?
+
+Tom: Power outages, electrical fires — obviously — and any situation involving exposed live wires or equipment that could cause injury. Those need immediate dispatch.
+
+Rep: And for less urgent stuff?
+
+Tom: Panel upgrades, new circuit installs, regular maintenance — those are non-emergency. Someone can call during business hours or leave their info after hours and we call back.
+
+Rep: What are your hours?
+
+Tom: Office is open 7 to 4 Monday through Friday. On-call is 24/7.
+
+Rep: Do you use field management software?
+
+Tom: We don't currently. We've been looking at a few options but nothing locked in yet.
+
+Rep: Any specific after-hours routing you have in mind?
+
+Tom: Yeah — emergencies should go to the crew dispatch line. Non-emergencies just leave their info.
+
+Rep: When an emergency call comes in, what information do you need from the caller before routing?
+
+Tom: Name, callback number, and the location. And also what the problem is — because sometimes what sounds like an emergency isn't, and I don't want to wake someone up at 3 AM for a tripped breaker they could reset themselves.
+
+Rep: That's a really good point. Should Clara try to triage that — ask a few questions to confirm it's truly an emergency?
+
+Tom: Yes. Ask them what's happening. If it's a tripped breaker, tell them how to reset it. Only escalate if it's beyond that.
+
+[Demo plays]
+
+Tom: This is really helpful. One thing though — my after-hours dispatch number is currently 555-0200, but we're changing that number next month. I'd need to be able to update that easily.
+
+Rep: Absolutely, that's easily configurable. Anything else?
+
+Tom: What's the timeout if the dispatch line doesn't answer?
+
+Rep: We configure that in onboarding — usually 30 to 60 seconds.
+
+Tom: I'd want 30 seconds. Our guys are on-call, they should pick up fast.
+
+---
+END OF TRANSCRIPT

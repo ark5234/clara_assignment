@@ -1,0 +1,48 @@
+DEMO CALL TRANSCRIPT — Case 005
+Company: Guardian Alarm & Security
+Industry: Electrical / Security Systems
+Date: 2024-04-02
+
+[CLARA]: Hi, thank you for calling. This is Clara — I'll be helping set up your AI phone agent today. Am I speaking with someone from Guardian Alarm & Security?
+
+[CLIENT — Sandra Reeves, Owner]: Yes! I'm Sandra Reeves, I own the company. Thanks for getting us set up.
+
+[CLARA]: Of course, Sandra. Can you tell me a bit about your business? What services do you provide?
+
+[SANDRA]: We install and service commercial and residential security alarm systems, CCTV, access control, and fire alarm monitoring. We're primarily in the Phoenix metro area. Our office is at 1155 East Camelback Road, Suite 305, Phoenix, AZ 85014.
+
+[CLARA]: Got it. What kinds of after-hours emergencies do you handle?
+
+[SANDRA]: A few things. First, if a monitored alarm goes into alarm — like a break-in or fire — that's handled automatically by our monitoring center, but sometimes the customer doesn't realize that and calls us directly in a panic. We want Clara to calm them down and confirm whether it's a real emergency or a false alarm.
+
+Second, if someone's access control system goes down overnight — like a door that won't lock or unlock — that's an emergency for commercial clients. They could have a security breach or be locked out of their own building.
+
+[CLARA]: How should Clara handle those two scenarios differently?
+
+[SANDRA]: For active fire or burglar alarms: ask if they've already called 911 and whether this is a false alarm or real event. If it sounds real, have Clara transfer to our emergency line — (602) 555-0177. If it's clearly a false alarm, walk them through resetting their panel and take notes.
+
+For access control emergencies: collect their name, phone, the address, and a brief description of the issue, then transfer to our emergency line as well — same number.
+
+[CLARA]: And what if you can't reach the emergency line?
+
+[SANDRA]: Tell them we're paging a technician and someone will call within 20 minutes. If it's a fire alarm situation, remind them to call 911 if they haven't.
+
+[CLARA]: Perfect. What are your business hours?
+
+[SANDRA]: Monday through Friday, 8 AM to 6 PM Arizona time. We don't observe Daylight Saving so that's always MST.
+
+[CLARA]: And during business hours, what should Clara do with inbound calls?
+
+[SANDRA]: Transfer to our main desk — (602) 555-0140. If they specifically ask for service scheduling, that's the same number. Sales inquiries go to me or my assistant — I'll give a separate line for that later in onboarding.
+
+[CLARA]: For non-emergency after-hours calls?
+
+[SANDRA]: Just take a message. Full name, phone number, what they need, and whether it's for existing service or a new install query. We'll call back next business day.
+
+[CLARA]: Do you use field service software?
+
+[SANDRA]: We use ServiceTitan. But the agent should NOT create service tickets — that's done by our dispatch team. If anything, it just needs to capture the info so they can create the ticket.
+
+[CLARA]: Any topics Clara should never touch?
+
+[SANDRA]: Don't discuss pricing — ever. Don't confirm or deny whether a specific address is in our monitoring list (that's a privacy issue). And if anyone says they're calling about a legal matter, transfer immediately to the office.

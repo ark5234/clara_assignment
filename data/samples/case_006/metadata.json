@@ -1,0 +1,22 @@
+{
+  "case_id": "case_006",
+  "company_name": "G&M Pressure Washing",
+  "industry": "pressure_washing",
+  "source_recording": "data/recordings/case_006/demo_call_video.mp4",
+  "source_audio": "data/recordings/case_006/demo_call_audio.m4a",
+  "zoom_chat": "data/recordings/case_006/zoom_chat.txt",
+  "contact": {
+    "primary_name": "Shelley Manley",
+    "phone": "403-870-8494",
+    "email": "gm_pressurewash@yahoo.ca"
+  },
+  "additional_contacts": [
+    {
+      "email": "info@benselectricsolutionsteam.com",
+      "note": "Shared in chat — possible secondary contact or related business"
+    }
+  ],
+  "notes": "Real demo call recording from 2026-01-14. Audio/video stored in data/recordings/case_006/. Transcript must be generated from audio before running demo pipeline.",
+  "transcript_status": "pending",
+  "pipeline_status": "awaiting_transcript"
+}

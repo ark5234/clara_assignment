@@ -1,0 +1,12 @@
+{
+  "case_id": "case_005",
+  "company_name": "Guardian Alarm & Security",
+  "industry": "electrical",
+  "contact": {
+    "primary_name": "Sandra Reeves",
+    "title": "Owner",
+    "phone": "(602) 555-0140",
+    "email": "sandra@guardianalarm.com",
+    "office_address": "1155 East Camelback Road, Suite 305, Phoenix, AZ 85014"
+  }
+}

@@ -1,0 +1,56 @@
+DEMO CALL TRANSCRIPT — Premier Fire Protection
+Date: 2026-02-15
+Participants: Clara Sales Rep (Rep), Client (Mike Harmon, Owner/Premier Fire Protection)
+
+---
+
+Rep: Hi Mike, thanks for jumping on a call. Tell me a bit about your business and what's giving you headaches right now.
+
+Mike: Sure, yeah. So we're Premier Fire Protection — we've been around about 12 years. We do fire suppression systems, mainly sprinkler installation and service. We also handle fire alarm systems — monitoring, inspection, that kind of thing.
+
+Rep: Got it. And what does your call volume look like?
+
+Mike: Pretty steady. We probably get 20 to 30 calls a day during normal hours. But honestly the bigger problem is after hours. We get these emergency calls — like somebody's sprinkler head has gone off and they've got water pouring from the ceiling, or their fire alarm won't stop going off. Those need to go to someone right away.
+
+Rep: What happens with those calls right now?
+
+Mike: That's the issue. They hit our main line, go to voicemail, and then our on-call tech — his name's Dave — he sometimes doesn't see it for 20, 30 minutes. By that time the customer is panicking. We've had situations where we almost lost a client over it.
+
+Rep: So the main pain point is that emergency calls aren't getting routed to Dave fast enough?
+
+Mike: Exactly. And honestly even during the day, our receptionist Sarah is great but she gets overwhelmed. If she's on another call, people just hang up. So we're losing calls there too.
+
+Rep: Makes sense. What kinds of things count as an emergency to you? Like what triggers that need-to-reach-Dave-immediately response?
+
+Mike: The big ones are an active sprinkler leak — like water is actively coming out — or a fire alarm that's been triggered and won't reset. Sometimes we get calls about a suppression system that's been activated, like at a restaurant. Those are all emergencies. Everything else — inspection requests, scheduling, billing questions — those can wait.
+
+Rep: And all of those emergency calls should go to your on-call tech?
+
+Mike: Yes. We have a phone tree setup for that. But I don't want Clara to just dump them there without getting their name and location first. That way even if Dave misses the call, we have the info.
+
+Rep: That makes sense. What software do you use to manage your jobs?
+
+Mike: We use ServiceTrade. It's our whole field service system.
+
+Rep: Are your hours pretty standard? Like Monday through Friday, 9 to 5?
+
+Mike: More like 8 to 5, Monday through Friday. We're closed weekends. Although sometimes we get Saturday calls too — usually for inspections — but officially we're not open Saturdays.
+
+Rep: Got it. Any holidays or special cases?
+
+Mike: Not anything specific I can think of right now.
+
+Rep: Let me show you how Clara would handle one of those emergency calls...
+
+[Clara demo plays — Mike listens and interacts with the demo agent]
+
+Mike: Okay yeah, I really like how it asks for the address before transferring. That's exactly what we need. And the way it handles the after-hours greeting is clean. 
+
+Rep: Great. One question — on the ServiceTrade side, do you have any rules about how jobs get created?
+
+Mike: I mean, we use it for everything. But I'd have to think about what we'd want auto-created versus done manually. That's probably something we'd nail down if we move forward.
+
+Rep: Absolutely, we'd sort that out in the onboarding call. Thanks Mike, I'll send over the summary.
+
+---
+END OF TRANSCRIPT
