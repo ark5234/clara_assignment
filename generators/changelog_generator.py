@@ -165,11 +165,11 @@ class ChangelogGenerator:
         lines = [
             f"# Changelog — {company}",
             f"**Account ID:** `{v1.config_id}`  |  **Date:** {now}  "
-            f"|  **Transition:** v1 → v2",
+            "|  **Transition:** v1 → v2",
             "",
             "## Summary",
-            f"| Metric | Value |",
-            f"|---|---|",
+            "| Metric | Value |",
+            "|---|---|",
             f"| Fields changed | {s['fields_changed']} |",
             f"| Unknowns resolved | {s['unknowns_resolved']} |",
             f"| Unknowns remaining | {s['unknowns_remaining']} |",

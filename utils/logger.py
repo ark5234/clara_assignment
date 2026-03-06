@@ -1,6 +1,5 @@
 """Structured logging using Rich for Clara AI pipeline."""
 import logging
-import sys
 from rich.logging import RichHandler
 from rich.console import Console
 

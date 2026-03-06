@@ -3,7 +3,6 @@
 Usage: python scripts/diff_viewer.py <case_id>
 """
 import json
-import os
 import sys
 from pathlib import Path
 

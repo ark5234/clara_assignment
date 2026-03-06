@@ -317,7 +317,8 @@ def diff(case_id: str, output_dir: str | None, show_raw: bool) -> None:
 
     if show_raw:
         console.rule("[dim]Flat Diff (raw)")
-        console.print_json(json.dumps(changes.get("flat_diff", [])))
+        raw_flat = changes.get("flat_diff", [])
+        console.print_json(json.dumps(raw_flat))
 
 
 # ---------------------------------------------------------------------------
