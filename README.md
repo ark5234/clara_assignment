@@ -55,6 +55,36 @@ GEMINI_API_KEY=your_key_here
 
 ---
 
+## Verification
+
+Run these commands before submitting or merging changes:
+
+```bash
+# activate the virtual environment first
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+flake8 --config .flake8
+pytest -q
+```
+
+Expected result:
+
+- `flake8` exits with no reported errors.
+- `pytest -q` passes all tests.
+
+Optional end-to-end check with sample data:
+
+```bash
+python main.py batch --cases-dir data/samples/
+python main.py status --case-id case_001
+python main.py diff --case-id case_001
+```
+
+---
+
 ## CLI usage
 
 ### Process a single demo call

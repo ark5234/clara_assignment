@@ -46,3 +46,8 @@ data/recordings/
 # Logs
 *.log
 logs/
+
+# Local verification artifacts
+flake8_output.txt
+pytest_output.txt
+lint_fix.patch
