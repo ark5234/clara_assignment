@@ -9,17 +9,6 @@ Design principles:
     Business hours flow: greeting → purpose → collect info → transfer → fallback → wrap up
     After-hours flow:    greeting → purpose → confirm emergency → route → wrap up
 """
-"""
-Agent prompt generator — converts an AgentConfig into a production-ready
-Retell AI system prompt.
-
-Design principles:
-- Every section is only rendered when data exists (no placeholder gaps)
-- Unknown/unconfirmed values are called out explicitly rather than silently skipped
-- The prompt structure follows the exact flows specified in the Clara assignment:
-        Business hours flow: greeting → purpose → collect info → transfer → fallback → wrap up
-        After-hours flow:    greeting → purpose → confirm emergency → route → wrap up
-"""
 from __future__ import annotations
 
 from schemas.agent_config import AgentConfig
@@ -156,7 +145,10 @@ class PromptGenerator:
             "## CALL FLOW B — AFTER HOURS (outside business hours)",
             "",
             "### Step 1 — Greeting",
-            f"Say: \"Thank you for calling {client_name}. Our office is currently closed. This is Clara — how can I help?\"",
+            (
+                f"Say: \"Thank you for calling {client_name}. Our office is currently "
+                "closed. This is Clara — how can I help?\""
+            ),
             "",
             "### Step 2 — Identify Purpose",
             "Listen carefully to determine the nature of the call.",
@@ -182,7 +174,11 @@ class PromptGenerator:
             ),
             "",
             "### Step 4B — If NON-EMERGENCY",
-            "Say: \"I understand. Since our office is currently closed, I'll take your information and have our team follow up with you during business hours.\"",
+            (
+                "Say: \"I understand. Since our office is currently closed, I'll take "
+                "your information and have our team follow up with you during business "
+                "hours.\""
+            ),
             "",
             "Collect:",
             "1. Full name",
@@ -257,7 +253,11 @@ class PromptGenerator:
                 target_str = target.name
                 if target.phone:
                     target_str += f" ({target.phone})"
-                timeout = f"{ed.transfer_timeout_seconds}s" if ed.transfer_timeout_seconds else "Default"
+                timeout = (
+                    f"{ed.transfer_timeout_seconds}s"
+                    if ed.transfer_timeout_seconds
+                    else "Default"
+                )
                 fallback = ed.fallback_on_timeout or "Log and assure callback"
                 lines.append(f"| {ed.type} emergency | {target_str} | {timeout} | {fallback} |")
                 has_rules = True
