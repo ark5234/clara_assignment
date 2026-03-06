@@ -50,8 +50,8 @@ class RetellAgentSpec(BaseModel):
     account_id: str
 
     # Voice and persona
-    voice_style: str = "professional" # professional | friendly | calm
-    voice_id: str = "11labs-Adrian"   # Retell voice ID — change in Retell UI as preferred
+    voice_style: str = "professional"  # professional | friendly | calm
+    voice_id: str = "11labs-Adrian"    # Retell voice ID — change in Retell UI as preferred
 
     # Core prompt
     system_prompt: str

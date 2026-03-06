@@ -134,12 +134,17 @@ class AccountMemoGenerator:
     def _build_office_hours_summary(self, config: AgentConfig) -> str:
         bh = config.business_hours
         if not bh or not bh.is_confirmed:
-            return "Business hours flow: greet → identify purpose → collect name & phone → transfer to main office → fallback if transfer fails → wrap up"
-        return (
-            f"During business hours ({bh.timezone or 'local time'}): "
-            "greet → identify purpose → collect name & phone → transfer to main line → "
-            "if transfer fails: log info and assure callback → ask if anything else → close"
-        )
+            return (
+                "Business hours flow: greet → identify purpose → collect name & phone "
+                "→ transfer to main office → fallback if transfer fails → wrap up"
+            )
+
+        parts = [
+            f"During business hours ({bh.timezone or 'local time'}):",
+            "greet → identify purpose → collect name & phone → transfer to main line",
+            "if transfer fails: log info and assure callback → ask if anything else → close",
+        ]
+        return " ".join(parts)
 
     def _build_after_hours_summary(self, config: AgentConfig) -> str:
         parts = ["After-hours flow: greet (closed) → identify purpose → confirm emergency"]

@@ -9,9 +9,20 @@ Design principles:
     Business hours flow: greeting → purpose → collect info → transfer → fallback → wrap up
     After-hours flow:    greeting → purpose → confirm emergency → route → wrap up
 """
+"""
+Agent prompt generator — converts an AgentConfig into a production-ready
+Retell AI system prompt.
+
+Design principles:
+- Every section is only rendered when data exists (no placeholder gaps)
+- Unknown/unconfirmed values are called out explicitly rather than silently skipped
+- The prompt structure follows the exact flows specified in the Clara assignment:
+  Business hours flow: greeting → purpose → collect info → transfer → fallback → wrap up
+  After-hours flow:    greeting → purpose → confirm emergency → route → wrap up
+"""
 from __future__ import annotations
 
-from schemas.agent_config import AgentConfig, BusinessHours, EmergencyDefinition
+from schemas.agent_config import AgentConfig
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -48,21 +59,23 @@ class PromptGenerator:
 
     def _identity(self, c: AgentConfig) -> str:
         client_name = c.client.name or "the company"
-        industry_note = ""
-        if c.client.service_types:
-            industry_note = (
-                f" You handle calls related to: {', '.join(c.client.service_types)}."
-            )
-        return f"""## IDENTITY & ROLE
-You are Clara, a professional AI voice receptionist for {client_name}.{industry_note}
-You handle all incoming calls with warmth, clarity, and efficiency.
-Your job is to get callers the right help quickly — emergencies go immediately to the on-call team; non-urgent requests are logged for follow-up.
-
-Always be:
-- **Professional and calm** — especially during emergencies
-- **Clear and concise** — do not ramble or ask unnecessary questions
-- **Empathetic** — acknowledge the caller's situation before acting
-- **Accurate** — never invent information, ETAs, or commitments you cannot confirm"""
+        industry_note = (
+            f" You handle calls related to: {', '.join(c.client.service_types)}."
+            if c.client.service_types
+            else ""
+        )
+        return (
+            "## IDENTITY & ROLE\n"
+            f"You are Clara, a professional AI voice receptionist for {client_name}.{industry_note}\n"
+            "You handle all incoming calls with warmth, clarity, and efficiency.\n"
+            "Your job is to get callers the right help quickly — emergencies go to the on-call team.\n"
+            "Non-urgent requests are logged for follow-up.\n\n"
+            "Always be:\n"
+            "- **Professional and calm** — especially during emergencies\n"
+            "- **Clear and concise** — do not ramble or ask unnecessary questions\n"
+            "- **Empathetic** — acknowledge the caller's situation before acting\n"
+            "- **Accurate** — never invent information, ETAs, or commitments you cannot confirm"
+        )
 
     def _business_hours_section(self, c: AgentConfig) -> str:
         bh = c.business_hours
@@ -71,7 +84,7 @@ Always be:
         if not bh:
             return (
                 "## BUSINESS HOURS\n"
-                f"⚠️ Business hours for {client_name} have not yet been confirmed. "
+                f"⚠️ Business hours for {client_name} have not yet been confirmed.\n"
                 "Treat all calls as if office status is unknown until this is resolved."
             )
 
@@ -79,9 +92,9 @@ Always be:
             tz_note = f" ({bh.timezone})" if bh.timezone else ""
             schedule = bh.human_readable()
             return f"## BUSINESS HOURS\n{client_name} office hours{tz_note}:\n{schedule}"
-        else:
-            note = bh.notes or "Hours not yet confirmed — treat as approximate."
-            return f"## BUSINESS HOURS\n⚠️ Approximate hours (not confirmed): {note}"
+
+        note = bh.notes or "Hours not yet confirmed — treat as approximate."
+        return f"## BUSINESS HOURS\n⚠️ Approximate hours (not confirmed): {note}"
 
     def _business_hours_flow(self, c: AgentConfig) -> str:
         client_name = c.client.name or "the company"
@@ -91,37 +104,39 @@ Always be:
         if bh and bh.is_confirmed and bh.is_fully_specified():
             hours_desc = f"Monday–Friday {bh.monday.open}–{bh.friday.close}{tz}"
 
-        # Build transfer step
         transfer_steps = self._format_transfer_steps(c, after_hours=False)
 
-        return f"""## CALL FLOW A — BUSINESS HOURS ({hours_desc})
-
-### Step 1 — Greeting
-Say: *"Thank you for calling {client_name}. This is Clara. How can I help you today?"*
-
-### Step 2 — Identify Purpose
-Listen carefully to determine whether this is:
-- An **EMERGENCY** (see Emergency Definitions below)
-- A **non-emergency** service request or inquiry
-
-### Step 3 — Collect Caller Information
-Always collect before transferring:
-- Full name: *"May I get your full name?"*
-- Callback number: *"And what is the best phone number to reach you?"*
-
-For emergencies, also collect:
-- Service address: *"What is the service address?"*
-
-### Step 4 — Transfer / Route
-{transfer_steps}
-
-### Step 5 — Fallback if Transfer Fails
-If the transfer is not answered or fails, say:
-*"I wasn't able to connect you with our team right now. Your information has been logged and someone will call you back shortly."*
-
-### Step 6 — Wrap Up
-Ask: *"Is there anything else I can help you with today?"*
-If no: *"Thank you for calling {client_name}. Have a great day!"*"""
+        parts = [
+            f"## CALL FLOW A — BUSINESS HOURS ({hours_desc})",
+            "",
+            "### Step 1 — Greeting",
+            f"Say: \"Thank you for calling {client_name}. This is Clara. How can I help you today?\"",
+            "",
+            "### Step 2 — Identify Purpose",
+            "Listen carefully to determine whether this is:",
+            "- An **EMERGENCY** (see Emergency Definitions below)",
+            "- A **non-emergency** service request or inquiry",
+            "",
+            "### Step 3 — Collect Caller Information",
+            "Always collect before transferring:",
+            "- Full name: \"May I get your full name?\"",
+            "- Callback number: \"And what is the best phone number to reach you?\"",
+            "",
+            "For emergencies, also collect:",
+            "- Service address: \"What is the service address?\"",
+            "",
+            "### Step 4 — Transfer / Route",
+            transfer_steps,
+            "",
+            "### Step 5 — Fallback if Transfer Fails",
+            "If the transfer is not answered or fails, say:",
+            "\"I wasn't able to connect you with our team right now.\nYour information has been logged and someone will call you back shortly.\"",
+            "",
+            "### Step 6 — Wrap Up",
+            "Ask: \"Is there anything else I can help you with today?\"",
+            f"If no: \"Thank you for calling {client_name}. Have a great day!\"",
+        ]
+        return "\n".join(parts)
 
     def _after_hours_flow(self, c: AgentConfig) -> str:
         client_name = c.client.name or "the company"
@@ -132,51 +147,53 @@ If no: *"Thank you for calling {client_name}. Have a great day!"*"""
             if bh.timezone:
                 hours_desc += f" {bh.timezone}"
 
-        # Build emergency transfer in after-hours context
         emergency_transfer = self._format_transfer_steps(c, after_hours=True)
 
-        return f"""## CALL FLOW B — AFTER HOURS (outside business hours)
-
-### Step 1 — Greeting
-Say: *"Thank you for calling {client_name}. Our office is currently closed. This is Clara — how can I help?"*
-
-### Step 2 — Identify Purpose
-Listen carefully to determine the nature of the call.
-
-### Step 3 — Confirm Emergency
-Ask: *"Is this an emergency situation that requires immediate attention?"*
-
-### Step 4A — If EMERGENCY
-Acknowledge: *"I understand — I'll connect you with our on-call team right away."*
-
-Collect **immediately before transfer**:
-1. Full name: *"May I get your full name?"*
-2. Callback number: *"What number can we reach you at?"*
-3. Service address: *"What is the service address?"*
-
-{emergency_transfer}
-
-**If transfer fails:**
-Say: *"I wasn't able to reach our on-call team at this moment. Your details have been recorded and someone will contact you as soon as possible. If this is a life-threatening emergency, please call 911."*
-
-### Step 4B — If NON-EMERGENCY
-Say: *"I understand. Since our office is currently closed, I'll take your information and have our team follow up with you during business hours."*
-
-Collect:
-1. Full name
-2. Callback phone number
-3. Description of the issue or request
-
-Confirm: *"Our team will follow up with you {hours_desc}."*
-
-### Step 5 — Wrap Up
-Ask: *"Is there anything else I can help you with?"*
-If no: *"Thank you for calling {client_name}. We'll be in touch soon."*"""
+        parts = [
+            "## CALL FLOW B — AFTER HOURS (outside business hours)",
+            "",
+            "### Step 1 — Greeting",
+            f"Say: \"Thank you for calling {client_name}. Our office is currently closed. This is Clara — how can I help?\"",
+            "",
+            "### Step 2 — Identify Purpose",
+            "Listen carefully to determine the nature of the call.",
+            "",
+            "### Step 3 — Confirm Emergency",
+            "Ask: \"Is this an emergency situation that requires immediate attention?\"",
+            "",
+            "### Step 4A — If EMERGENCY",
+            "Acknowledge: \"I understand — I'll connect you with our on-call team right away.\"",
+            "",
+            "Collect **immediately before transfer**:",
+            "1. Full name: \"May I get your full name?\"",
+            "2. Callback number: \"What number can we reach you at?\"",
+            "3. Service address: \"What is the service address?\"",
+            "",
+            emergency_transfer,
+            "",
+            "**If transfer fails:**",
+            "\"I wasn't able to reach our on-call team at this moment. Your details have been recorded and someone will contact you as soon as possible. If this is a life-threatening emergency, please call 911.\"",
+            "",
+            "### Step 4B — If NON-EMERGENCY",
+            "Say: \"I understand. Since our office is currently closed, I'll take your information and have our team follow up with you during business hours.\"",
+            "",
+            "Collect:",
+            "1. Full name",
+            "2. Callback phone number",
+            "3. Description of the issue or request",
+            "",
+            f"Confirm: \"Our team will follow up with you {hours_desc}.\"",
+            "",
+            "### Step 5 — Wrap Up",
+            "Ask: \"Is there anything else I can help you with?\"",
+            "If no: \"Thank you for calling {client_name}. We'll be in touch soon.\"",
+        ]
+        return "\n".join(parts)
 
     def _format_transfer_steps(self, c: AgentConfig, after_hours: bool) -> str:
         if not c.emergency_definitions:
             return (
-                "⚠️ Transfer targets have not yet been configured. "
+                "⚠️ Transfer targets have not yet been configured.\n"
                 "Contact the onboarding team to complete routing setup."
             )
 
@@ -207,7 +224,7 @@ If no: *"Thank you for calling {client_name}. We'll be in touch soon."*"""
         if not c.emergency_definitions:
             return (
                 "## EMERGENCY DEFINITIONS\n"
-                "⚠️ No emergency types have been confirmed yet. "
+                "⚠️ No emergency types have been confirmed yet.\n"
                 "Treat any caller expressing urgency as a potential emergency until this is resolved."
             )
 
@@ -219,7 +236,12 @@ If no: *"Thank you for calling {client_name}. We'll be in touch soon."*"""
         return "## EMERGENCY DEFINITIONS\nThe following situations require IMMEDIATE transfer:\n\n" + "\n".join(rows)
 
     def _routing_rules(self, c: AgentConfig) -> str:
-        lines = ["## ROUTING RULES", "", "| Condition | Transfer Target | Timeout | Fallback |", "|---|---|---|---|"]
+        lines = [
+            "## ROUTING RULES",
+            "",
+            "| Condition | Transfer Target | Timeout | Fallback |",
+            "|---|---|---|---|",
+        ]
 
         has_rules = False
         for ed in c.emergency_definitions:
@@ -298,4 +320,4 @@ If no: *"Thank you for calling {client_name}. We'll be in touch soon."*"""
         rules.extend(c.special_rules)
 
         bullet_list = "\n".join(f"- {r}" for r in rules)
-        return f"## PROHIBITED BEHAVIORS\n{bullet_list}"
+        return "## PROHIBITED BEHAVIORS\n" + bullet_list

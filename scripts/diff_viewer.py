@@ -6,6 +6,7 @@ import json
 import sys
 from pathlib import Path
 
+
 def main(case_id: str):
     base = Path("outputs") / "accounts" / case_id / "changelog"
     if not base.exists():
@@ -18,6 +19,7 @@ def main(case_id: str):
     data = json.loads(changes_json.read_text(encoding="utf-8"))
     print(f"Changelog for {case_id}:\n")
     print(json.dumps(data, indent=2))
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

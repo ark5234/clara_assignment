@@ -1,4 +1,3 @@
-import json
 from processors.onboarding_processor import OnboardingProcessor
 
 

@@ -276,7 +276,9 @@ def diff(case_id: str, output_dir: str | None, show_raw: bool) -> None:
     summary_table.add_row("Fields changed", str(s.get("fields_changed", 0)))
     summary_table.add_row("Unknowns resolved", str(s.get("unknowns_resolved", 0)))
     summary_table.add_row("Unknowns remaining", str(s.get("unknowns_remaining", 0)))
-    summary_table.add_row("Conflicts", f"[red]{s.get('conflicts_detected', 0)}[/red]" if s.get('conflicts_detected') else "0")
+    conflicts_val = s.get("conflicts_detected")
+    conflicts_str = f"[red]{conflicts_val}[/red]" if conflicts_val else "0"
+    summary_table.add_row("Conflicts", conflicts_str)
     console.print(summary_table)
 
     # Field changes
@@ -318,7 +320,8 @@ def diff(case_id: str, output_dir: str | None, show_raw: bool) -> None:
     if show_raw:
         console.rule("[dim]Flat Diff (raw)")
         raw_flat = changes.get("flat_diff", [])
-        console.print_json(json.dumps(raw_flat))
+        raw_flat_json = json.dumps(raw_flat)
+        console.print_json(raw_flat_json)
 
 
 # ---------------------------------------------------------------------------

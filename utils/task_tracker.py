@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import os
 from datetime import datetime, timezone
-from typing import Optional
+# typing.Optional not used; keep minimal imports
 
 import config
 from utils.logger import get_logger

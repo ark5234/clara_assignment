@@ -143,12 +143,17 @@ class OnboardingProcessor(BaseProcessor):
             v2 = self._merge(existing_config, raw, source)
         except Exception as exc:
             # Persist full traceback for debugging
-            import traceback, os
+            import traceback
+            import os
+
             tb = traceback.format_exc()
             base = os.path.join(os.getcwd(), "outputs", "logs")
             os.makedirs(base, exist_ok=True)
-            fname = os.path.join(base, f"onboarding_error_{case_id}_{self._now_iso().replace(':','')}.log")
-            with open(fname, 'w', encoding='utf-8') as fh:
+            fname = os.path.join(
+                base,
+                f"onboarding_error_{case_id}_{self._now_iso().replace(':', '')}.log",
+            )
+            with open(fname, "w", encoding="utf-8") as fh:
                 fh.write(tb)
             logger.error(f"[{case_id}] Onboarding processing failed: {exc}")
             logger.error(f"Traceback saved to {fname}")
@@ -380,6 +385,7 @@ class OnboardingProcessor(BaseProcessor):
                 except Exception:
                     item = {"type": item}
             # helper to coerce list-like fields to list[str]
+
             def _list_of_str(x):
                 if x is None:
                     return []
@@ -416,15 +422,32 @@ class OnboardingProcessor(BaseProcessor):
                     return None
 
             target = None
-            if isinstance(item, dict) and (item.get("transfer_target_phone") or item.get("transfer_target_name") or item.get("transfer_to") or item.get("transfer_target")):
+            if isinstance(item, dict) and (
+                item.get("transfer_target_phone")
+                or item.get("transfer_target_name")
+                or item.get("transfer_to")
+                or item.get("transfer_target")
+            ):
                 target = RoutingTarget(
-                    name=self._safe_str(item.get("transfer_target_name") or item.get("transfer_target") or item.get("transfer_to")) or "On-call team",
+                    name=self._safe_str(
+                        item.get("transfer_target_name")
+                        or item.get("transfer_target")
+                        or item.get("transfer_to")
+                    )
+                    or "On-call team",
                     phone=self._safe_str(item.get("transfer_target_phone") or item.get("transfer_to")),
                     type=self._safe_str(item.get("transfer_target_type")) or "phone_tree",
                 )
 
-            keywords = _list_of_str(item.get("keywords") or item.get("keywords_list") or [])
-            collect = _list_of_str(item.get("collect_before_transfer") or item.get("collect") or item.get("collect_fields") or ["name", "phone", "address"])
+            keywords = _list_of_str(
+                item.get("keywords") or item.get("keywords_list") or []
+            )
+            collect = _list_of_str(
+                item.get("collect_before_transfer")
+                or item.get("collect")
+                or item.get("collect_fields")
+                or ["name", "phone", "address"]
+            )
             timeout = _int_or_none(item.get("transfer_timeout_seconds") or item.get("timeout"))
             fallback = self._safe_str(item.get("fallback_on_timeout") or item.get("fallback"))
 

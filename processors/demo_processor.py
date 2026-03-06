@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import json
 from typing import Any
-
 from schemas.agent_config import (
     AgentConfig,
     BusinessHours,
@@ -20,7 +19,6 @@ from schemas.agent_config import (
     EmergencyDefinition,
     IntegrationConfig,
     NonEmergencyRouting,
-    RoutingTarget,
     TimeSlot,
     UnknownItem,
 )
@@ -32,73 +30,71 @@ logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 # LLM system prompt
 # ---------------------------------------------------------------------------
-_DEMO_SYSTEM_PROMPT = """You are a configuration extraction specialist for Clara, an AI voice agent platform serving service trade businesses (fire protection, HVAC, electrical, alarm, sprinkler companies).
-
-Your task is to analyze a DEMO CALL transcript and extract configuration data in JSON format.
-
-## STRICT EXTRACTION RULES
-1. Extract ONLY information EXPLICITLY stated in the transcript.
-2. NEVER infer, assume, or create details that are not mentioned.
-3. Set fields to null if not explicitly mentioned.
-4. For every critical missing field, add an entry to questions_or_unknowns.
-5. This is a DEMO/EXPLORATORY call — incomplete information is EXPECTED and NORMAL.
-6. Business hours mentioned in a demo are vague hints — always set is_precise to false.
-
-## CRITICAL FIELDS — always flag as HIGH PRIORITY unknowns if missing:
-- Exact business hours with timezone
-- Emergency type definitions (what qualifies as emergency)
-- After-hours routing targets with phone numbers
-- Transfer timeout duration
-- Integration system constraints (if a system was mentioned)
-
-## JSON RESPONSE FORMAT
-Return ONLY a single valid JSON object with this exact structure:
-{
-  "client_name": "string or null",
-  "industry": "string or null — one of: fire_protection, hvac, electrical, alarm, sprinkler, facility_maintenance, other",
-  "service_types": ["array of service types explicitly mentioned"],
-  "pain_points": ["array of pain points explicitly stated by the caller"],
-  "emergency_types": [
-    {
-      "type": "string — concise type name, e.g. sprinkler_leak",
-      "description": "string — how the caller described it",
-      "keywords": ["trigger keywords mentioned by caller"],
-      "routing_hint": "string or null — any routing destination mentioned for this type"
-    }
-  ],
-  "business_hours_hints": {
-    "days_mentioned": "string or null — e.g. Monday through Friday, weekdays",
-    "hours_mentioned": "string or null — e.g. 8 to 5, standard business hours",
-    "timezone_mentioned": "string or null",
-    "is_precise": false
-  },
-  "routing_mentions": [
-    {
-      "scenario": "string — what triggers this routing",
-      "destination": "string or null — where calls should go",
-      "method": "string or null — how they are routed"
-    }
-  ],
-  "integration_system": "string or null — e.g. ServiceTrade, Salesforce",
-  "after_hours_description": "string or null — how after-hours is described",
-  "non_emergency_description": "string or null — how non-emergency calls are described",
-  "contact_info": {
-    "company_name": "string or null",
-    "contact_name": "string or null",
-    "phone": "string or null",
-    "office_address": "string or null — full mailing address if mentioned",
-    "location": "string or null — city/state if full address not given"
-  },
-  "questions_or_unknowns": [
-    {
-      "field": "string — dot-notation field identifier, e.g. business_hours.timezone",
-      "question": "string — specific actionable question to resolve this gap",
-      "priority": "high or medium or low",
-      "context": "string or null — why this field matters"
-    }
-  ],
-  "confidence_notes": ["array of notes about confidence in specific extracted values"]
-}"""
+_DEMO_SYSTEM_PROMPT = (
+        "You are a configuration extraction specialist for Clara, an AI voice agent platform "
+        "serving service trade businesses (fire protection, HVAC, electrical, alarm, sprinkler).\n\n"
+        "Your task is to analyze a DEMO CALL transcript and extract configuration data in JSON format.\n\n"
+        "## STRICT EXTRACTION RULES\n"
+        "1. Extract ONLY information EXPLICITLY stated in the transcript.\n"
+        "2. NEVER infer, assume, or create details that are not mentioned.\n"
+        "3. Set fields to null if not explicitly mentioned.\n"
+        "4. For every critical missing field, add an entry to questions_or_unknowns.\n"
+        "5. This is a DEMO/EXPLORATORY call — incomplete information is EXPECTED and NORMAL.\n"
+        "6. Business hours mentioned in a demo are vague hints — always set is_precise to false.\n\n"
+        "## CRITICAL FIELDS — always flag as HIGH PRIORITY unknowns if missing:\n"
+        "- Exact business hours with timezone\n"
+        "- Emergency type definitions (what qualifies as emergency)\n"
+        "- After-hours routing targets with phone numbers\n"
+        "- Transfer timeout duration\n"
+        "- Integration system constraints (if a system was mentioned)\n\n"
+        "## JSON RESPONSE FORMAT\nReturn ONLY a single valid JSON object with this exact structure:\n"
+        "{\n"
+        "  \"client_name\": \"string or null\",\n"
+        "  \"industry\": \"string or null — one of: fire_protection, hvac, electrical, alarm, sprinkler, facility_maintenance, other\",\n"
+        "  \"service_types\": [\"array of service types explicitly mentioned\"],\n"
+        "  \"pain_points\": [\"array of pain points explicitly stated by the caller\"],\n"
+        "  \"emergency_types\": [\n"
+        "    {\n"
+        "      \"type\": \"string — concise type name, e.g. sprinkler_leak\",\n"
+        "      \"description\": \"string — how the caller described it\",\n"
+        "      \"keywords\": [\"trigger keywords mentioned by caller\"],\n"
+        "      \"routing_hint\": \"string or null — any routing destination mentioned for this type\"\n"
+        "    }\n"
+        "  ],\n"
+        "  \"business_hours_hints\": {\n"
+        "    \"days_mentioned\": \"string or null — e.g. Monday through Friday, weekdays\",\n"
+        "    \"hours_mentioned\": \"string or null — e.g. 8 to 5, standard business hours\",\n"
+        "    \"timezone_mentioned\": \"string or null\",\n"
+        "    \"is_precise\": false\n"
+        "  },\n"
+        "  \"routing_mentions\": [\n"
+        "    {\n"
+        "      \"scenario\": \"string — what triggers this routing\",\n"
+        "      \"destination\": \"string or null — where calls should go\",\n"
+        "      \"method\": \"string or null — how they are routed\"\n"
+        "    }\n"
+        "  ],\n"
+        "  \"integration_system\": \"string or null — e.g. ServiceTrade, Salesforce\",\n"
+        "  \"after_hours_description\": \"string or null — how after-hours is described\",\n"
+        "  \"non_emergency_description\": \"string or null — how non-emergency calls are described\",\n"
+        "  \"contact_info\": {\n"
+        "    \"company_name\": \"string or null\",\n"
+        "    \"contact_name\": \"string or null\",\n"
+        "    \"phone\": \"string or null\",\n"
+        "    \"office_address\": \"string or null — full mailing address if mentioned\",\n"
+        "    \"location\": \"string or null — city/state if full address not given\"\n"
+        "  },\n"
+        "  \"questions_or_unknowns\": [\n"
+        "    {\n"
+        "      \"field\": \"string — dot-notation field identifier, e.g. business_hours.timezone\",\n"
+        "      \"question\": \"string — specific actionable question to resolve this gap\",\n"
+        "      \"priority\": \"high or medium or low\",\n"
+        "      \"context\": \"string or null — why this field matters\"\n"
+        "    }\n"
+        "  ],\n"
+        "  \"confidence_notes\": [\"array of notes about confidence in specific extracted values\"]\n"
+        "}"
+)
 
 
 class DemoProcessor(BaseProcessor):

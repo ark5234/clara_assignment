@@ -74,7 +74,7 @@ def transcribe(audio: str, case_id: str, model: str, output_dir: str | None) -> 
 
     click.echo(f"[OK] Transcript saved → {transcript_path}")
     click.echo(f"     ({len(transcript_text)} characters)")
-    click.echo(f"\nNext step:")
+    click.echo("\nNext step:")
     click.echo(f"  python main.py demo --case-id {case_id} --transcript {transcript_path}")
 
 
