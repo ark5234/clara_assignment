@@ -81,6 +81,7 @@ Optional end-to-end check with sample data:
 python main.py batch --cases-dir data/samples/
 python main.py status --case-id case_001
 python main.py diff --case-id case_001
+python scripts/build_dashboard.py
 ```
 
 ---
@@ -133,6 +134,22 @@ python main.py diff --case-id case_001 --show-raw   # also print flat diff JSON
 ```bash
 python main.py inspect --case-id case_001 --version v2
 ```
+
+### Build the presentation dashboard
+
+```bash
+python scripts/build_dashboard.py
+```
+
+Frontend run options:
+
+```bash
+python scripts/build_dashboard.py
+python -m http.server 8000
+```
+
+Then open `http://localhost:8000/dashboard/` in a browser.
+For a quick check, you can also open `dashboard/index.html` directly.
 
 ---
 
@@ -220,6 +237,7 @@ Retell's free tier does not provide API access for agent creation. Each `retell_
 Import `workflows/n8n_workflow.json` into your n8n instance to automate the full pipeline:
 
 - **File trigger** — automatically runs when a new `demo_transcript.txt` appears in `data/samples/`
+- **Onboarding detection** — checks for `onboarding_transcript.txt` first, then falls back to `onboarding_form.json`
 - **Batch trigger** — scheduled daily run for all cases
 - Runs Python CLI commands via Execute Command nodes
 - Logs tasks to the task tracker on completion

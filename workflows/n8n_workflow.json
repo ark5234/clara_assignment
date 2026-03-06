@@ -50,7 +50,7 @@
       "typeVersion": 1,
       "position": [640, 200],
       "parameters": {
-        "command": "python main.py demo --case-id {{ $json.case_id }} --file {{ $json.transcript_path }}"
+        "command": "python main.py demo --case-id {{ $json.case_id }} --transcript {{ $json.transcript_path }}"
       },
       "notes": "Runs the Clara demo processor. Requires Python + venv activated."
     },
@@ -61,7 +61,7 @@
       "typeVersion": 1,
       "position": [640, 380],
       "parameters": {
-        "command": "python main.py onboard --case-id {{ $json.case_id }} --file data/samples/{{ $json.case_id }}/onboarding_transcript.txt"
+        "command": "python main.py onboard --case-id {{ $json.case_id }} --transcript data/samples/{{ $json.case_id }}/onboarding_transcript.txt"
       },
       "notes": "Only executes if onboarding_transcript.txt exists."
     },
@@ -77,7 +77,7 @@
           "conditions": [
             {
               "leftValue": "={{ $json.stdout }}",
-              "rightValue": "ok",
+              "rightValue": "present",
               "operator": { "type": "string", "operation": "contains" }
             }
           ],
@@ -117,6 +117,79 @@
       "parameters": {
         "command": "python -c \"from utils.task_tracker import TaskTracker; TaskTracker().log_task('{{ $json.case_id }}','v2','n8n_trigger')\""
       }
+    },
+    {
+      "id": "n12",
+      "name": "Check Onboarding Transcript Exists",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [820, 200],
+      "parameters": {
+        "command": "python -c \"from pathlib import Path; print('present' if Path(r'data/samples/{{ $json.case_id }}/onboarding_transcript.txt').exists() else 'missing')\""
+      },
+      "notes": "Checks for a transcript-based onboarding artifact before running the transcript update path."
+    },
+    {
+      "id": "n13",
+      "name": "Check Onboarding Form Exists",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1080, 420],
+      "parameters": {
+        "command": "python -c \"from pathlib import Path; print('present' if Path(r'data/samples/{{ $json.case_id }}/onboarding_form.json').exists() else 'missing')\""
+      },
+      "notes": "Falls back to onboarding_form.json when no onboarding transcript exists."
+    },
+    {
+      "id": "n14",
+      "name": "Check Form Result",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1300, 420],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.stdout }}",
+              "rightValue": "present",
+              "operator": { "type": "string", "operation": "contains" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "n15",
+      "name": "Run Onboarding Pipeline (Form)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1520, 340],
+      "parameters": {
+        "command": "python main.py form --case-id {{ $json.case_id }} --form data/samples/{{ $json.case_id }}/onboarding_form.json"
+      },
+      "notes": "Runs the onboarding form update path when a structured form is present."
+    },
+    {
+      "id": "n16",
+      "name": "No Onboarding Artifact Yet",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1520, 500],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status_msg",
+              "name": "status_message",
+              "value": "=No onboarding transcript or form found for {{ $json.case_id }}; v1 artifacts were created and v2 will be generated when onboarding data is added.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "notes": "End state when the demo pipeline has run but onboarding input has not been delivered yet."
     },
     {
       "id": "n9",
@@ -176,15 +249,30 @@
       "main": [[{ "node": "Run Demo Pipeline", "type": "main", "index": 0 }]]
     },
     "Run Demo Pipeline": {
+      "main": [[{ "node": "Check Onboarding Transcript Exists", "type": "main", "index": 0 }]]
+    },
+    "Check Onboarding Transcript Exists": {
       "main": [[{ "node": "Check Onboarding File Exists", "type": "main", "index": 0 }]]
     },
     "Check Onboarding File Exists": {
       "main": [
         [{ "node": "Run Onboarding Pipeline (Transcript)", "type": "main", "index": 0 }],
-        [{ "node": "Error Handler", "type": "main", "index": 0 }]
+        [{ "node": "Check Onboarding Form Exists", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check Onboarding Form Exists": {
+      "main": [[{ "node": "Check Form Result", "type": "main", "index": 0 }]]
+    },
+    "Check Form Result": {
+      "main": [
+        [{ "node": "Run Onboarding Pipeline (Form)", "type": "main", "index": 0 }],
+        [{ "node": "No Onboarding Artifact Yet", "type": "main", "index": 0 }]
       ]
     },
     "Run Onboarding Pipeline (Transcript)": {
+      "main": [[{ "node": "Generate Changelog (Diff)", "type": "main", "index": 0 }]]
+    },
+    "Run Onboarding Pipeline (Form)": {
       "main": [[{ "node": "Generate Changelog (Diff)", "type": "main", "index": 0 }]]
     },
     "Generate Changelog (Diff)": {

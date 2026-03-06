@@ -57,62 +57,93 @@ Your task is to analyze an ONBOARDING CALL transcript and extract CONFIRMED oper
 Return ONLY a single valid JSON object:
 {
   "business_hours": {
-    "timezone": "IANA timezone string or null — e.g. America/Chicago",
-    "monday":    {"open": "HH:MM or null", "close": "HH:MM or null", "closed": false},
-    "tuesday":   {"open": "HH:MM or null", "close": "HH:MM or null", "closed": false},
-    "wednesday": {"open": "HH:MM or null", "close": "HH:MM or null", "closed": false},
-    "thursday":  {"open": "HH:MM or null", "close": "HH:MM or null", "closed": false},
-    "friday":    {"open": "HH:MM or null", "close": "HH:MM or null", "closed": false},
+        "timezone": null,
+        "monday":    {"open": null, "close": null, "closed": false},
+        "tuesday":   {"open": null, "close": null, "closed": false},
+        "wednesday": {"open": null, "close": null, "closed": false},
+        "thursday":  {"open": null, "close": null, "closed": false},
+        "friday":    {"open": null, "close": null, "closed": false},
     "saturday":  {"open": null, "close": null, "closed": true},
     "sunday":    {"open": null, "close": null, "closed": true},
-    "notes": "string or null"
+        "notes": null
   },
   "emergency_definitions": [
     {
-      "type": "string — concise snake_case type name",
-      "description": "string — how it was described",
-      "keywords": ["trigger keywords stated"],
+            "type": null,
+            "description": null,
+            "keywords": [],
       "collect_before_transfer": ["name", "phone", "address"],
-      "transfer_target_name": "string or null",
-      "transfer_target_phone": "string or null",
-      "transfer_target_type": "phone_tree or individual or voicemail or dispatch or null",
-      "transfer_timeout_seconds": "integer or null",
-      "fallback_on_timeout": "string or null — what to do if transfer fails"
+            "transfer_target_name": null,
+            "transfer_target_phone": null,
+            "transfer_target_type": null,
+            "transfer_timeout_seconds": null,
+            "fallback_on_timeout": null
     }
   ],
   "non_emergency_routing": {
-    "business_hours_action": "transfer or voicemail or null",
-    "business_hours_target_name": "string or null",
-    "business_hours_target_phone": "string or null",
-    "after_hours_action": "collect_and_callback or voicemail or transfer or null",
+        "business_hours_action": null,
+        "business_hours_target_name": null,
+        "business_hours_target_phone": null,
+        "after_hours_action": null,
     "collect_fields": ["name", "phone", "description"],
-    "callback_promise": "string or null"
+        "callback_promise": null
   },
   "integration_constraints": [
     {
-      "system": "string — e.g. ServiceTrade",
-      "rule_description": "string — exact rule as stated",
-      "job_types_excluded": ["list of job types NEVER to auto-create"],
-      "job_types_auto_create": ["list of job types that MAY be auto-created"]
+            "system": null,
+            "rule_description": null,
+            "job_types_excluded": [],
+            "job_types_auto_create": []
     }
   ],
   "special_rules": ["list of any special rules explicitly stated"],
   "overrides_from_demo": [
     {
-      "field": "string — what changed",
-      "demo_assumption": "string or null — what was assumed before",
-      "confirmed_value": "string — what was confirmed",
-      "reason": "string or null"
+            "field": null,
+            "demo_assumption": null,
+            "confirmed_value": null,
+            "reason": null
     }
   ],
   "questions_or_unknowns": [
     {
-      "field": "string",
-      "question": "string",
-      "priority": "high or medium or low"
+            "field": null,
+            "question": null,
+            "priority": "medium"
     }
   ]
-}"""
+}
+
+Use null for any missing scalar. Use [] for any missing list. Do not copy placeholder text into the output."""
+
+
+_PLACEHOLDER_EXACT = {
+    "string",
+    "string or null",
+    "integer or null",
+    "hh:mm or null",
+    "high or medium or low",
+    "trigger keywords stated",
+    "list of any special rules explicitly stated",
+}
+
+_PLACEHOLDER_SUBSTRINGS = (
+    "concise snake_case type name",
+    "how it was described",
+    "what to do if transfer fails",
+    "list of job types never to auto-create",
+    "list of job types that may be auto-created",
+    "transfer or voicemail or null",
+    "collect_and_callback or voicemail or transfer or null",
+    "phone_tree or individual or voicemail or dispatch or null",
+    "iana timezone string or null",
+    "what was assumed before",
+)
+
+_BUSINESS_HOURS_ACTIONS = {"transfer", "voicemail"}
+_AFTER_HOURS_ACTIONS = {"collect_and_callback", "voicemail", "transfer"}
+_TRANSFER_TARGET_TYPES = {"phone_tree", "individual", "voicemail", "dispatch"}
+_DAY_NAMES = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
 
 class OnboardingProcessor(BaseProcessor):
@@ -179,6 +210,11 @@ class OnboardingProcessor(BaseProcessor):
         v2.source = source
 
         change_log = list(v2.change_log)
+        existing_emergency_fields = {
+            str(u.field)
+            for u in v2.questions_or_unknowns
+            if str(getattr(u, "field", "")).startswith("emergency_definitions.")
+        }
 
         # Defensive normalization: ensure existing unknown items use string fields
         for u in v2.questions_or_unknowns:
@@ -212,68 +248,97 @@ class OnboardingProcessor(BaseProcessor):
 
         resolved_fields: set[str] = set()
 
+        client_updates = self._extract_client_updates(onboarding)
+        if client_updates:
+            old_client = v2.client.model_dump()
+            for key, value in client_updates.items():
+                setattr(v2.client, key, value)
+            _log(
+                "client",
+                old_client,
+                v2.client.model_dump(),
+                reason="Confirmed client profile details in onboarding",
+            )
+
         # ---- Business hours ----------------------------------------
         bh_raw = onboarding.get("business_hours")
         if bh_raw:
             new_bh = self._build_business_hours(bh_raw)
-            old_bh_repr = v2.business_hours.model_dump() if v2.business_hours else None
-            conflict: bool = bool(
-                v2.business_hours is not None
-                and v2.business_hours.timezone
-                and new_bh.timezone
-                and v2.business_hours.timezone.lower() != new_bh.timezone.lower()
-            )
-            _log(
-                "business_hours",
-                old_bh_repr,
-                new_bh.model_dump(),
-                reason="Confirmed exact hours in onboarding" + (" — TIMEZONE CONFLICT" if conflict else ""),
-                conflict=conflict,
-            )
-            v2.business_hours = new_bh
-            resolved_fields |= {"business_hours.timezone", "business_hours.schedule"}
+            if new_bh and self._business_hours_has_confirmed_values(new_bh):
+                old_bh_repr = v2.business_hours.model_dump() if v2.business_hours else None
+                conflict: bool = bool(
+                    v2.business_hours is not None
+                    and v2.business_hours.timezone
+                    and new_bh.timezone
+                    and v2.business_hours.timezone.lower() != new_bh.timezone.lower()
+                )
+                _log(
+                    "business_hours",
+                    old_bh_repr,
+                    new_bh.model_dump(),
+                    reason="Confirmed exact hours in onboarding" + (" — TIMEZONE CONFLICT" if conflict else ""),
+                    conflict=conflict,
+                )
+                v2.business_hours = new_bh
+                resolved_fields |= {"business_hours.timezone", "business_hours.schedule"}
+                if new_bh.timezone:
+                    resolved_fields |= {
+                        str(item.field)
+                        for item in v2.questions_or_unknowns
+                        if "timezone" in str(item.field).lower()
+                    }
 
         # ---- Emergency definitions ----------------------------------
         emerg_raw = onboarding.get("emergency_definitions") or []
         if emerg_raw:
             new_emerg = self._build_emergency_defs(emerg_raw)
-            _log(
-                "emergency_definitions",
-                [e.model_dump() for e in v2.emergency_definitions],
-                [e.model_dump() for e in new_emerg],
-                reason="Emergency types and routing confirmed in onboarding",
-            )
-            v2.emergency_definitions = new_emerg
-            # Mark transfer target and timeout as resolved for each type
-            for ed in new_emerg:
-                resolved_fields.add(f"emergency_definitions.{ed.type}.transfer_target")
-            resolved_fields.add("emergency_routing.transfer_timeout_seconds")
-            resolved_fields.add("emergency_routing.fallback_behavior")
+            if new_emerg:
+                _log(
+                    "emergency_definitions",
+                    [e.model_dump() for e in v2.emergency_definitions],
+                    [e.model_dump() for e in new_emerg],
+                    reason="Emergency types and routing confirmed in onboarding",
+                )
+                v2.emergency_definitions = new_emerg
+                # Mark transfer target and timeout as resolved for each type
+                for ed in new_emerg:
+                    resolved_fields.add(f"emergency_definitions.{ed.type}.transfer_target")
+                resolved_fields |= existing_emergency_fields
+                resolved_fields |= {
+                    str(item.field)
+                    for item in v2.questions_or_unknowns
+                    if "dispatch" in str(item.field).lower()
+                    or "transfer_target" in str(item.field).lower()
+                }
+                resolved_fields.add("emergency_routing.transfer_timeout_seconds")
+                resolved_fields.add("emergency_routing.fallback_behavior")
 
         # ---- Non-emergency routing ----------------------------------
         ner_raw = onboarding.get("non_emergency_routing")
         if ner_raw:
             new_ner = self._build_non_emergency(ner_raw)
-            _log(
-                "non_emergency_routing",
-                v2.non_emergency_routing.model_dump() if v2.non_emergency_routing else None,
-                new_ner.model_dump(),
-            )
-            v2.non_emergency_routing = new_ner
+            if self._non_emergency_has_confirmed_values(new_ner):
+                _log(
+                    "non_emergency_routing",
+                    v2.non_emergency_routing.model_dump() if v2.non_emergency_routing else None,
+                    new_ner.model_dump(),
+                )
+                v2.non_emergency_routing = new_ner
 
         # ---- Integration constraints --------------------------------
         int_raw = onboarding.get("integration_constraints") or []
         if int_raw:
             new_int = self._build_integration(int_raw, v2.integration)
-            system = new_int.system or ""
-            _log(
-                "integration",
-                v2.integration.model_dump() if v2.integration else None,
-                new_int.model_dump(),
-                reason="Integration constraints confirmed in onboarding",
-            )
-            v2.integration = new_int
-            resolved_fields.add(f"integration.{system}.constraints")
+            if self._integration_has_confirmed_values(new_int):
+                system = new_int.system or ""
+                _log(
+                    "integration",
+                    v2.integration.model_dump() if v2.integration else None,
+                    new_int.model_dump(),
+                    reason="Integration constraints confirmed in onboarding",
+                )
+                v2.integration = new_int
+                resolved_fields.add(f"integration.{system}.constraints")
 
         # ---- Special rules -----------------------------------------
         special_raw = onboarding.get("special_rules") or []
@@ -315,16 +380,22 @@ class OnboardingProcessor(BaseProcessor):
             if not isinstance(item, dict):
                 item = {}
 
-            field = self._safe_str(item.get("field")) or "unknown"
+            field = self._clean_str(item.get("field"))
+            question = self._clean_str(item.get("question"))
+            priority = self._clean_str(item.get("priority")) or "medium"
+            if (not field and not question) or (field == "unknown" and not question):
+                continue
+            field = field or "unknown"
             if field not in existing_fields:
                 v2.questions_or_unknowns.append(
                     UnknownItem(
                         field=field,
-                        question=self._safe_str(item.get("question")) or "",
-                        priority=self._safe_str(item.get("priority")) or "medium",
+                        question=question or "",
+                        priority=priority,
                         source_stage="onboarding",
                     )
                 )
+                existing_fields.add(field)
 
         # ---- Mark resolved unknowns ---------------------------------
         for item in v2.questions_or_unknowns:
@@ -334,6 +405,9 @@ class OnboardingProcessor(BaseProcessor):
                 key = ""
             if key in resolved_fields:
                 item.resolved = True
+
+        self._retire_superseded_unknowns(v2, onboarding)
+        self._prune_empty_unknowns(v2)
 
         v2.change_log = change_log
         return v2
@@ -346,24 +420,36 @@ class OnboardingProcessor(BaseProcessor):
             d = raw.get(day) or {}
             # defensive: if day value is a string like 'closed', handle it
             if isinstance(d, str):
-                if d.strip().lower().startswith("closed"):
+                cleaned = self._clean_str(d)
+                if not cleaned:
+                    return TimeSlot(open=None, close=None, closed=False)
+                if cleaned.lower().startswith("closed"):
                     return TimeSlot(open=None, close=None, closed=True)
-                # fallback: attempt to parse a single open-close pair like '08:00-18:00'
-                m = re.match(r"(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})", d)
-                if m:
-                    return TimeSlot(open=self._safe_str(m.group(1)), close=self._safe_str(m.group(2)), closed=False)
-                return TimeSlot(open=self._safe_str(d), close=None, closed=False)
+                start, end = self._extract_time_range(cleaned)
+                if start or end:
+                    return TimeSlot(open=start, close=end, closed=False)
+                return TimeSlot(open=self._normalize_time_token(cleaned), close=None, closed=False)
             if isinstance(d, dict):
+                open_value = self._clean_str(d.get("open"))
+                close_value = self._clean_str(d.get("close"))
+                if open_value and not close_value:
+                    start, end = self._extract_time_range(open_value)
+                    if start or end:
+                        open_value, close_value = start, end
+                if close_value and not open_value:
+                    start, end = self._extract_time_range(close_value)
+                    if start or end:
+                        open_value, close_value = start, end
                 return TimeSlot(
-                    open=self._safe_str(d.get("open")),
-                    close=self._safe_str(d.get("close")),
+                    open=self._normalize_time_token(open_value),
+                    close=self._normalize_time_token(close_value),
                     closed=bool(d.get("closed", False)),
                 )
             # fallback
             return TimeSlot(open=None, close=None, closed=False)
 
         return BusinessHours(
-            timezone=self._safe_str(raw.get("timezone")),
+            timezone=self._normalize_timezone(raw.get("timezone")),
             monday=_slot("monday"),
             tuesday=_slot("tuesday"),
             wednesday=_slot("wednesday"),
@@ -371,7 +457,7 @@ class OnboardingProcessor(BaseProcessor):
             friday=_slot("friday"),
             saturday=_slot("saturday"),
             sunday=_slot("sunday"),
-            notes=self._safe_str(raw.get("notes")),
+            notes=self._clean_str(raw.get("notes")),
             is_confirmed=True,
         )
 
@@ -384,24 +470,6 @@ class OnboardingProcessor(BaseProcessor):
                     item = json.loads(item)
                 except Exception:
                     item = {"type": item}
-            # helper to coerce list-like fields to list[str]
-
-            def _list_of_str(x):
-                if x is None:
-                    return []
-                if isinstance(x, list):
-                    out = []
-                    for v in x:
-                        if isinstance(v, str):
-                            out.append(v)
-                        else:
-                            out.append(self._safe_str(v) or "")
-                    return [o for o in out if o]
-                if isinstance(x, str):
-                    # split on commas or semicolons
-                    parts = [p.strip() for p in re.split(r"[;,]", x) if p.strip()]
-                    return parts
-                return []
 
             def _int_or_none(x):
                 if x is None:
@@ -421,6 +489,8 @@ class OnboardingProcessor(BaseProcessor):
                 except Exception:
                     return None
 
+            item_type = self._clean_str(item.get("type"))
+            description = self._clean_str(item.get("description")) or ""
             target = None
             if isinstance(item, dict) and (
                 item.get("transfer_target_phone")
@@ -428,33 +498,39 @@ class OnboardingProcessor(BaseProcessor):
                 or item.get("transfer_to")
                 or item.get("transfer_target")
             ):
-                target = RoutingTarget(
-                    name=self._safe_str(
-                        item.get("transfer_target_name")
-                        or item.get("transfer_target")
-                        or item.get("transfer_to")
-                    )
-                    or "On-call team",
-                    phone=self._safe_str(item.get("transfer_target_phone") or item.get("transfer_to")),
-                    type=self._safe_str(item.get("transfer_target_type")) or "phone_tree",
+                target_name = self._clean_str(
+                    item.get("transfer_target_name")
+                    or item.get("transfer_target")
+                    or item.get("transfer_to")
                 )
+                target_phone = self._clean_str(item.get("transfer_target_phone") or item.get("transfer_to"))
+                target_type = self._enum_or_none(item.get("transfer_target_type"), _TRANSFER_TARGET_TYPES)
+                if target_name or target_phone or target_type:
+                    target = RoutingTarget(
+                        name=target_name or "On-call team",
+                        phone=target_phone,
+                        type=target_type or "phone_tree",
+                    )
 
-            keywords = _list_of_str(
+            keywords = self._list_of_clean_str(
                 item.get("keywords") or item.get("keywords_list") or []
             )
-            collect = _list_of_str(
+            collect = self._list_of_clean_str(
                 item.get("collect_before_transfer")
                 or item.get("collect")
                 or item.get("collect_fields")
                 or ["name", "phone", "address"]
             )
             timeout = _int_or_none(item.get("transfer_timeout_seconds") or item.get("timeout"))
-            fallback = self._safe_str(item.get("fallback_on_timeout") or item.get("fallback"))
+            fallback = self._clean_str(item.get("fallback_on_timeout") or item.get("fallback"))
+
+            if not item_type and not description and not keywords and not target and timeout is None and not fallback:
+                continue
 
             defs.append(
                 EmergencyDefinition(
-                    type=self._safe_str(item.get("type")) or "unknown",
-                    description=self._safe_str(item.get("description")) or "",
+                    type=item_type or "unknown",
+                    description=description,
                     keywords=keywords,
                     collect_before_transfer=collect or ["name", "phone", "address"],
                     transfer_target=target,
@@ -465,34 +541,38 @@ class OnboardingProcessor(BaseProcessor):
         return defs
 
     def _build_non_emergency(self, raw: dict) -> NonEmergencyRouting:
+        target_name = self._clean_str(raw.get("business_hours_target_name"))
+        target_phone = self._clean_str(raw.get("business_hours_target_phone"))
         target = None
-        if raw.get("business_hours_target_name") or raw.get("business_hours_target_phone"):
+        if target_name or target_phone:
             target = RoutingTarget(
-                name=self._safe_str(raw.get("business_hours_target_name")) or "Office",
-                phone=self._safe_str(raw.get("business_hours_target_phone")),
+                name=target_name or "Office",
+                phone=target_phone,
                 type="individual",
             )
         return NonEmergencyRouting(
-            business_hours_action=self._safe_str(raw.get("business_hours_action")),
+            business_hours_action=self._enum_or_none(raw.get("business_hours_action"), _BUSINESS_HOURS_ACTIONS),
             business_hours_target=target,
-            after_hours_action=self._safe_str(raw.get("after_hours_action")),
-            collect_fields=raw.get("collect_fields") or ["name", "phone", "description"],
-            callback_promise=self._safe_str(raw.get("callback_promise")),
+            after_hours_action=self._enum_or_none(raw.get("after_hours_action"), _AFTER_HOURS_ACTIONS),
+            collect_fields=self._list_of_clean_str(raw.get("collect_fields")) or ["name", "phone", "description"],
+            callback_promise=self._clean_str(raw.get("callback_promise")),
         )
 
     def _build_integration(
         self, raw_list: list[dict], existing: IntegrationConfig | None
     ) -> IntegrationConfig:
         constraints = []
-        system_name = existing.system if existing else None
+        system_name = self._clean_str(existing.system) if existing else None
         for item in raw_list:
             # Item may be a dict or a simple string
             if isinstance(item, str):
-                # treat string as system name
-                system_name = system_name or item
+                cleaned = self._clean_str(item)
+                if not cleaned:
+                    continue
+                system_name = system_name or cleaned
                 constraints.append(
                     IntegrationConstraint(
-                        system=item or system_name or "unknown",
+                        system=cleaned,
                         rule_description="",
                         job_types_excluded=[],
                         job_types_auto_create=[],
@@ -500,20 +580,193 @@ class OnboardingProcessor(BaseProcessor):
                 )
                 continue
 
-            system_name = system_name or self._safe_str(item.get("system"))
+            system_value = self._clean_str(item.get("system")) or system_name
+            rule_description = self._clean_str(item.get("rule_description")) or ""
+            job_types_excluded = self._list_of_clean_str(item.get("job_types_excluded"))
+            job_types_auto_create = self._list_of_clean_str(item.get("job_types_auto_create"))
+            if not system_value and not rule_description and not job_types_excluded and not job_types_auto_create:
+                continue
+            system_name = system_name or system_value
             constraints.append(
                 IntegrationConstraint(
-                    system=self._safe_str(item.get("system")) or system_name or "unknown",
-                    rule_description=self._safe_str(item.get("rule_description")) or "",
-                    job_types_excluded=item.get("job_types_excluded") or [],
-                    job_types_auto_create=item.get("job_types_auto_create") or [],
+                    system=system_value or system_name or "unknown",
+                    rule_description=rule_description,
+                    job_types_excluded=job_types_excluded,
+                    job_types_auto_create=job_types_auto_create,
                 )
             )
         return IntegrationConfig(
             system=system_name,
-            enabled=True,
+            enabled=bool(system_name or constraints),
             constraints=constraints,
         )
+
+    def _extract_client_updates(self, onboarding: dict[str, Any]) -> dict[str, Any]:
+        updates: dict[str, Any] = {}
+        company_name = self._clean_str(onboarding.get("company_name"))
+        industry = self._clean_str(onboarding.get("industry"))
+        office_address = self._clean_str(onboarding.get("office_address"))
+        service_types = self._list_of_clean_str(onboarding.get("service_types"))
+        if company_name:
+            updates["name"] = company_name
+        if industry:
+            updates["industry"] = industry
+        if office_address:
+            updates["office_address"] = office_address
+        if service_types:
+            updates["service_types"] = service_types
+        return updates
+
+    def _business_hours_has_confirmed_values(self, business_hours: BusinessHours | None) -> bool:
+        if not business_hours:
+            return False
+        if business_hours.timezone:
+            return True
+        for day_name in _DAY_NAMES[:5]:
+            slot = getattr(business_hours, day_name)
+            if slot.closed or slot.open or slot.close:
+                return True
+        for day_name in _DAY_NAMES[5:]:
+            slot = getattr(business_hours, day_name)
+            if slot.open or slot.close:
+                return True
+        return False
+
+    def _non_emergency_has_confirmed_values(self, routing: NonEmergencyRouting | None) -> bool:
+        if not routing:
+            return False
+        if routing.business_hours_action or routing.after_hours_action or routing.callback_promise:
+            return True
+        if routing.business_hours_target and (
+            routing.business_hours_target.name or routing.business_hours_target.phone
+        ):
+            return True
+        return bool(routing.collect_fields)
+
+    def _integration_has_confirmed_values(self, integration: IntegrationConfig | None) -> bool:
+        if not integration:
+            return False
+        if integration.system:
+            return True
+        return bool(integration.constraints)
+
+    def _retire_superseded_unknowns(self, config: AgentConfig, onboarding: dict[str, Any]) -> None:
+        if onboarding.get("emergency_definitions"):
+            current_types = {ed.type for ed in config.emergency_definitions}
+            for item in config.questions_or_unknowns:
+                field = str(item.field)
+                if not field.startswith("emergency_definitions."):
+                    continue
+                parts = field.split(".")
+                if len(parts) < 3:
+                    item.resolved = True
+                    continue
+                if parts[1] not in current_types:
+                    item.resolved = True
+
+    def _prune_empty_unknowns(self, config: AgentConfig) -> None:
+        cleaned: list[UnknownItem] = []
+        for item in config.questions_or_unknowns:
+            item.field = self._clean_str(item.field) or "unknown"
+            item.question = self._clean_str(item.question) or ""
+            item.priority = self._clean_str(item.priority) or "medium"
+            if item.field == "unknown" and not item.question:
+                continue
+            cleaned.append(item)
+        config.questions_or_unknowns = cleaned
+
+    def _enum_or_none(self, value: Any, allowed: set[str]) -> str | None:
+        cleaned = self._clean_str(value)
+        if not cleaned:
+            return None
+        lowered = cleaned.lower()
+        return lowered if lowered in allowed else None
+
+    def _list_of_clean_str(self, value: Any) -> list[str]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            cleaned = []
+            for item in value:
+                if isinstance(item, list):
+                    cleaned.extend(self._list_of_clean_str(item))
+                    continue
+                text = self._clean_str(item)
+                if text:
+                    cleaned.append(text)
+            return cleaned
+        if isinstance(value, str):
+            parts = [p.strip() for p in re.split(r"[;,]", value) if p.strip()]
+            return [text for text in (self._clean_str(part) for part in parts) if text]
+        return [text for text in [self._clean_str(value)] if text]
+
+    def _clean_str(self, value: Any) -> str | None:
+        cleaned = self._safe_str(value)
+        if cleaned is None:
+            return None
+        return None if self._is_placeholder_text(cleaned) else cleaned
+
+    def _is_placeholder_text(self, value: str | None) -> bool:
+        if value is None:
+            return False
+        normalized = re.sub(r"\s+", " ", value.strip()).lower()
+        if normalized in _PLACEHOLDER_EXACT:
+            return True
+        return any(fragment in normalized for fragment in _PLACEHOLDER_SUBSTRINGS)
+
+    def _normalize_time_token(self, value: Any) -> str | None:
+        cleaned = self._clean_str(value)
+        if not cleaned:
+            return None
+        token = cleaned.strip()
+        lowered = token.lower()
+        if lowered == "noon":
+            return "12:00"
+        if lowered == "midnight":
+            return "00:00"
+        match = re.fullmatch(r"(\d{1,2})(?::(\d{2}))?\s*([ap]m)?", lowered)
+        if not match:
+            return token
+        hour = int(match.group(1))
+        minute = int(match.group(2) or 0)
+        meridiem = match.group(3)
+        if meridiem == "pm" and hour != 12:
+            hour += 12
+        if meridiem == "am" and hour == 12:
+            hour = 0
+        return f"{hour:02d}:{minute:02d}"
+
+    def _extract_time_range(self, value: str | None) -> tuple[str | None, str | None]:
+        cleaned = self._clean_str(value)
+        if not cleaned:
+            return None, None
+        normalized = cleaned.replace("–", "-").replace("—", "-")
+        match = re.search(
+            (
+                r"(\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)\s*(?:to|-)\s*"
+                r"(\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?|noon|midnight)"
+            ),
+            normalized,
+        )
+        if not match:
+            return None, None
+        return (
+            self._normalize_time_token(match.group(1)),
+            self._normalize_time_token(match.group(2)),
+        )
+
+    def _normalize_timezone(self, value: Any) -> str | None:
+        cleaned = self._clean_str(value)
+        if not cleaned:
+            return None
+        lowered = cleaned.lower()
+        mapping = {
+            "central time": "America/Chicago",
+            "mountain time": "America/Denver",
+            "pacific time": "America/Los_Angeles",
+            "eastern time": "America/New_York",
+        }
+        return mapping.get(lowered, cleaned)
 
     def _normalize_form_alternates(self, raw: dict) -> dict:
         """Normalize common alternate form keys/shapes into the canonical onboarding schema.
@@ -601,14 +854,23 @@ class OnboardingProcessor(BaseProcessor):
                         return _recurse(parsed)
                     except Exception:
                         pass
-                if ";" in s or ("," in s and "\n" not in s):
+                if ";" in s:
                     parts = [p.strip() for p in re.split(r"[;,]", s) if p.strip()]
                     return [_recurse(p) for p in parts]
-                return s
+                return self._clean_str(s)
             if isinstance(value, dict):
                 return {k: _recurse(v) for k, v in value.items()}
             if isinstance(value, list):
-                return [_recurse(v) for v in value]
+                cleaned = []
+                for item in value:
+                    normalized = _recurse(item)
+                    if normalized is None:
+                        continue
+                    if isinstance(normalized, list):
+                        cleaned.extend([entry for entry in normalized if entry is not None])
+                        continue
+                    cleaned.append(normalized)
+                return cleaned
             return value
 
         return _recurse(raw)

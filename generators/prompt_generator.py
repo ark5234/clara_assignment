@@ -189,7 +189,7 @@ class PromptGenerator:
             "",
             "### Step 5 — Wrap Up",
             "Ask: \"Is there anything else I can help you with?\"",
-            "If no: \"Thank you for calling {client_name}. We'll be in touch soon.\"",
+            f"If no: \"Thank you for calling {client_name}. We'll be in touch soon.\"",
         ]
         return "\n".join(parts)
 

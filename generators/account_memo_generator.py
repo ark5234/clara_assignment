@@ -6,6 +6,7 @@ It is human-readable, machine-parseable, and version-stamped.
 """
 from __future__ import annotations
 
+from collections import Counter
 from datetime import datetime, timezone
 
 from schemas.agent_config import AgentConfig, BusinessHours
@@ -54,15 +55,17 @@ class AccountMemoGenerator:
     def _build_hours(self, bh: BusinessHours | None) -> BusinessHoursMemo | None:
         if not bh:
             return None
-        open_days, start, end = [], None, None
+        open_days = []
+        schedule_pairs = []
         for attr, label in zip(_DAY_NAMES, _DAY_LABELS):
             slot = getattr(bh, attr)
             if not slot.closed:
                 open_days.append(label)
-                if start is None and slot.open:
-                    start = slot.open
-                if slot.close:
-                    end = slot.close
+                if slot.open or slot.close:
+                    schedule_pairs.append((slot.open, slot.close))
+        start, end = None, None
+        if schedule_pairs:
+            start, end = Counter(schedule_pairs).most_common(1)[0][0]
         return BusinessHoursMemo(
             days=open_days,
             start=start,
@@ -156,9 +159,25 @@ class AccountMemoGenerator:
         return " ".join(parts)
 
     def _build_notes(self, config: AgentConfig) -> str | None:
-        notes = list(config.processing_notes)
+        notes = []
+        seen = set()
+
+        def _push(value: str | None) -> None:
+            if not value:
+                return
+            cleaned = value.strip().strip(";,")
+            if not cleaned or not any(ch.isalnum() for ch in cleaned):
+                return
+            if cleaned in seen:
+                return
+            seen.add(cleaned)
+            notes.append(cleaned)
+
+        for note in config.processing_notes:
+            _push(note)
         if config.special_rules:
-            notes.extend(config.special_rules)
+            for rule in config.special_rules:
+                _push(rule)
         if config.integration and config.integration.system:
-            notes.append(f"Integration: {config.integration.system}")
+            _push(f"Integration: {config.integration.system}")
         return "; ".join(notes) if notes else None
