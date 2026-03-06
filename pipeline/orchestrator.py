@@ -1,5 +1,5 @@
 """
-Pipeline orchestrator — the main entry point for all Clara processing.
+Pipeline orchestrator â€” the main entry point for all Clara processing.
 
 Responsibilities:
 - Accept demo transcripts, onboarding transcripts, and onboarding forms
@@ -70,7 +70,7 @@ class Orchestrator:
     # ------------------------------------------------------------------
     def run_demo(self, case_id: str, transcript: str) -> PipelineResult:
         """
-        Process a demo transcript → produce v1 artifacts.
+        Process a demo transcript â†’ produce v1 artifacts.
         Idempotent: returns cached v1 if same transcript was already processed.
         """
         processor = DemoProcessor(llm=self.llm)
@@ -80,7 +80,7 @@ class Orchestrator:
         if self.store.exists(case_id, "v1"):
             existing = self.store.load(case_id, "v1")
             if existing and existing.input_hash == input_hash:
-                logger.info(f"[{case_id}] v1 already up-to-date (same hash) — skipping")
+                logger.info(f"[{case_id}] v1 already up-to-date (same hash) â€” skipping")
                 config_path = os.path.join(self.store._version_dir(case_id, "v1"), "agent_config.json")
                 return PipelineResult(
                     case_id=case_id,
@@ -88,7 +88,7 @@ class Orchestrator:
                     version="v1",
                     config_path=config_path,
                     agent_config=existing,
-                    notes=["v1 skipped — identical input hash"],
+                    notes=["v1 skipped â€” identical input hash"],
                 )
 
         try:
@@ -106,7 +106,7 @@ class Orchestrator:
             notes = []
             if v1_config.high_priority_unknowns():
                 notes.append(
-                    f"{len(v1_config.high_priority_unknowns())} high-priority unknowns — "
+                    f"{len(v1_config.high_priority_unknowns())} high-priority unknowns â€” "
                     "onboarding call recommended"
                 )
 
@@ -132,7 +132,7 @@ class Orchestrator:
         self, case_id: str, transcript: str, source: str = "onboarding_call"
     ) -> PipelineResult:
         """
-        Process an onboarding transcript → produce v2 artifacts + changelog.
+        Process an onboarding transcript â†’ produce v2 artifacts + changelog.
         Requires v1 to already exist.
         """
         v1 = self.store.load(case_id, "v1")
@@ -147,7 +147,7 @@ class Orchestrator:
         if self.store.exists(case_id, "v2"):
             existing = self.store.load(case_id, "v2")
             if existing and existing.input_hash == input_hash:
-                logger.info(f"[{case_id}] v2 already up-to-date (same hash) — skipping")
+                logger.info(f"[{case_id}] v2 already up-to-date (same hash) â€” skipping")
                 config_path = os.path.join(self.store._version_dir(case_id, "v2"), "agent_config.json")
                 return PipelineResult(
                     case_id=case_id,
@@ -155,7 +155,7 @@ class Orchestrator:
                     version="v2",
                     config_path=config_path,
                     agent_config=existing,
-                    notes=["v2 skipped — identical input hash"],
+                    notes=["v2 skipped â€” identical input hash"],
                 )
 
         try:
@@ -182,7 +182,7 @@ class Orchestrator:
                 )
             conflicts = [e for e in v2_config.change_log if e.conflict_noted]
             if conflicts:
-                notes.append(f"{len(conflicts)} conflict(s) detected — review changelog")
+                notes.append(f"{len(conflicts)} conflict(s) detected â€” review changelog")
 
             self._track_task(case_id, "v2", source, config_path)
 
@@ -205,7 +205,7 @@ class Orchestrator:
 
     def run_form(self, case_id: str, form_data: dict | str) -> PipelineResult:
         """
-        Process a structured onboarding form → produce v2 artifacts + changelog.
+        Process a structured onboarding form â†’ produce v2 artifacts + changelog.
         Requires v1 to already exist.
         """
         v1 = self.store.load(case_id, "v1")
@@ -221,7 +221,7 @@ class Orchestrator:
         if self.store.exists(case_id, "v2"):
             existing = self.store.load(case_id, "v2")
             if existing and existing.input_hash == input_hash:
-                logger.info(f"[{case_id}] v2 already up-to-date (same form hash) — skipping")
+                logger.info(f"[{case_id}] v2 already up-to-date (same form hash) â€” skipping")
                 config_path = os.path.join(self.store._version_dir(case_id, "v2"), "agent_config.json")
                 return PipelineResult(
                     case_id=case_id,
@@ -229,7 +229,7 @@ class Orchestrator:
                     version="v2",
                     config_path=config_path,
                     agent_config=existing,
-                    notes=["v2 skipped — identical form hash"],
+                    notes=["v2 skipped â€” identical form hash"],
                 )
 
         try:
@@ -282,10 +282,10 @@ class Orchestrator:
         Expected directory structure per case:
           cases_dir/
             <case_id>/
-              demo_transcript.txt          ← required
-              onboarding_transcript.txt    ← optional (mutually exclusive with form)
-              onboarding_form.json         ← optional (mutually exclusive with transcript)
-              metadata.json                ← optional, used for case_id override
+              demo_transcript.txt          â† required
+              onboarding_transcript.txt    â† optional (mutually exclusive with form)
+              onboarding_form.json         â† optional (mutually exclusive with transcript)
+              metadata.json                â† optional, used for case_id override
         """
         if not os.path.isdir(cases_dir):
             logger.error(f"Cases directory not found: {cases_dir}")
@@ -315,7 +315,7 @@ class Orchestrator:
             # Step 1: Demo transcript (required)
             demo_path = os.path.join(case_path, "demo_transcript.txt")
             if not os.path.exists(demo_path):
-                logger.warning(f"[{case_id}] No demo_transcript.txt found — skipping")
+                logger.warning(f"[{case_id}] No demo_transcript.txt found â€” skipping")
                 results.append(PipelineResult(
                     case_id=case_id,
                     status="error",
@@ -351,7 +351,7 @@ class Orchestrator:
 
             else:
                 logger.info(
-                    f"[{case_id}] No onboarding data found — v1 only. "
+                    f"[{case_id}] No onboarding data found â€” v1 only. "
                     "Add onboarding_transcript.txt or onboarding_form.json to generate v2."
                 )
 
@@ -374,6 +374,5 @@ class Orchestrator:
                 artifacts=[config_path],
             )
         except Exception as exc:
-            # Task tracker is non-critical — never block pipeline on tracker failures
+            # Task tracker is non-critical; never block pipeline on tracker failures
             logger.debug(f"[{case_id}] Task tracker log skipped: {exc}")
-
