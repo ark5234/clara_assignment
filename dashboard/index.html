@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Clara AI Demo Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230e7c86'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-size='34' font-family='Arial,sans-serif' fill='white'%3EC%3C/text%3E%3C/svg%3E" />
   <style>
     :root {
       --ink: #162028;
@@ -131,13 +132,23 @@
     .pill.ok { background: rgba(43, 122, 75, 0.12); color: var(--ok); }
     .pill.warn { background: rgba(217, 164, 65, 0.18); color: var(--warn); }
     .pill.demo { background: rgba(14, 124, 134, 0.12); color: var(--teal); }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      margin-top: 26px;
+    }
+    .section-head h2 { margin: 0; font-size: 24px; }
+    .section-copy { color: var(--muted); font-size: 14px; max-width: 540px; }
     .cases {
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       margin-top: 18px;
+      align-items: start;
     }
     .case-card {
       border-radius: 22px;
-      padding: 18px;
+      padding: 20px;
       transform: translateY(16px);
       opacity: 0;
       animation: rise 560ms ease forwards;
@@ -160,23 +171,57 @@
       letter-spacing: 0.12em;
     }
     .case-name { margin: 6px 0 0; font-size: 22px; line-height: 1.05; }
-    .case-meta { display: grid; gap: 10px; margin-top: 18px; }
-    .case-meta div {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 14px;
+    .case-subtitle { margin-top: 10px; color: var(--muted); font-size: 15px; line-height: 1.45; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(22, 32, 40, 0.05);
+      color: var(--ink);
     }
-    .case-meta dt { color: var(--muted); }
-    .case-meta dd { margin: 0; text-align: right; font-weight: 600; }
-    .note {
-      margin-top: 14px;
-      padding-top: 14px;
+    .chip strong { color: var(--muted); font-weight: 700; }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .stat-card {
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.38);
+      border: 1px solid var(--line);
+    }
+    .stat-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; }
+    .stat-value { margin-top: 6px; font-size: 20px; font-weight: 700; }
+    .summary-block {
+      margin-top: 16px;
+      padding-top: 16px;
       border-top: 1px solid var(--line);
+    }
+    .summary-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; }
+    .summary-value {
+      margin-top: 8px;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 14px;
       line-height: 1.45;
-      min-height: 72px;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .extra-section { margin-top: 10px; }
+    .extra-section .cases { grid-template-columns: minmax(280px, 360px); }
+    .empty-state {
+      border-radius: 18px;
+      padding: 18px;
+      border: 1px dashed var(--line);
+      color: var(--muted);
     }
     .spotlight { margin-top: 18px; }
     .spotlight-item { padding: 12px 0; border-top: 1px solid var(--line); }
@@ -191,6 +236,11 @@
       .layout { grid-template-columns: 1fr; }
       .shell { width: min(100% - 20px, 1180px); padding-top: 20px; }
       .hero { padding: 22px; border-radius: 24px; }
+      .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .cases { grid-template-columns: 1fr; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -204,7 +254,7 @@
         It is designed for the video walkthrough, so the repo can show demo intake, onboarding
         updates, and v2 readiness without any hosted dependency.
       </p>
-      <div class="stamp">Generated 2026-03-06T11:28:33.192211+00:00</div>
+      <div class="stamp">Generated 2026-03-06T11:50:16.937477+00:00</div>
       <div class="grid metrics" id="metrics"></div>
     </section>
 
@@ -219,11 +269,29 @@
       </article>
     </section>
 
-    <section class="grid cases" id="cases"></section>
+    <section class="section-head">
+      <div>
+        <h2>Deliverable Cases</h2>
+        <div class="section-copy">
+          The five paired assignment cases, surfaced with only the most useful operational details.
+        </div>
+      </div>
+    </section>
+    <section class="grid cases" id="deliverable-cases"></section>
+
+    <section class="extra-section" id="extra-section">
+      <div class="section-head">
+        <div>
+          <h2>Extra Samples</h2>
+          <div class="section-copy">Additional demo-only cases kept separate from the scored deliverables.</div>
+        </div>
+      </div>
+      <section class="grid cases" id="extra-cases"></section>
+    </section>
   </main>
 
   <script>
-    const data = {"generated_at": "2026-03-06T11:28:33.192211+00:00", "summary": {"deliverable_cases": 5, "ready_cases": 5, "extra_cases": 1, "total_unknowns": 1, "total_conflicts": 3}, "cases": [{"case_id": "case_001", "company_name": "Premier Fire Protection", "industry": "fire_protection", "status": "v2 ready", "latest_version": "v2", "source": "onboarding_call", "timezone": "America/Chicago", "hours": "Monday, Tuesday, Wednesday, Thursday, Friday | 07:30-17:00", "unresolved_unknowns": 0, "fields_changed": 6, "conflicts": 1, "notes": "If the caller is in actual physical danger or there is an active fire, instruct them to call 911 immediately.; Integration: ServiceTrade", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (active_sprinkler_leak, triggered_fire_alarm, suppression_system_discharge): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "is_deliverable": true}, {"case_id": "case_002", "company_name": "arctic_hvac_services", "industry": "arctic_hvac_services", "status": "v2 ready", "latest_version": "v2", "source": "onboarding_form", "timezone": "America/Chicago", "hours": "Monday, Tuesday, Wednesday, Thursday, Friday | 08:00-17:30", "unresolved_unknowns": 0, "fields_changed": 5, "conflicts": 0, "notes": "Never route billing or payment questions to the on-call technician — even after hours.; If caller mentions a life-threatening situation (fire, gas smell), instruct them to call 911 immediately.; Do not promise specific technician arrival times unless dispatch confirms.; Integration: ServiceTrade", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (hvac_critical_failure, hvac_extreme_weather_failure): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "is_deliverable": true}, {"case_id": "case_003", "company_name": "Electra Electrical Services", "industry": "electra_electrical_services", "status": "v2 ready", "latest_version": "v2", "source": "onboarding_call", "timezone": "America/Denver", "hours": "Monday, Tuesday, Wednesday, Thursday, Friday | 07:30-17:00", "unresolved_unknowns": 1, "fields_changed": 5, "conflicts": 0, "notes": "For no-power calls, ask whether the caller checked the breaker panel and tried resetting it before escalating.; If the caller mentions carbon monoxide, tell them to leave the building immediately and call 911.", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (power_outage, electrical_fire, exposed_live_wires): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "is_deliverable": true}, {"case_id": "case_004", "company_name": "Summit Sprinkler Systems", "industry": "Fire Protection (Wet/Dry Pipe Sprinkler Systems)", "status": "v2 ready", "latest_version": "v2", "source": "onboarding_call", "timezone": "America/Denver", "hours": "Monday, Tuesday, Wednesday, Thursday, Friday, Saturday | 07:00-17:00", "unresolved_unknowns": 0, "fields_changed": 6, "conflicts": 1, "notes": "If a caller mentions they are an attorney or uses the words litigation or lawsuit, transfer them to the office and say the team will assist directly.; Integration: FieldEdge", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (active_discharge_or_leak, dry_side_pressure_drop): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "is_deliverable": true}, {"case_id": "case_005", "company_name": "Guardian Alarm & Security", "industry": "Electrical / Security Systems", "status": "v2 ready", "latest_version": "v2", "source": "onboarding_form", "timezone": "MST", "hours": "Monday, Tuesday, Wednesday, Thursday, Friday | 08:00-18:00", "unresolved_unknowns": 0, "fields_changed": 5, "conflicts": 1, "notes": "Never discuss pricing or provide cost estimates; Never confirm or deny whether a specific address is monitored; If caller mentions legal matter or litigation, transfer to office immediately; False alarm callers: walk through panel reset steps before transfer; Integration: ServiceTitan", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (active_fire_alarm, access_control_failure): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "is_deliverable": true}, {"case_id": "case_006", "company_name": "G&M Pressure Washing", "industry": "Unknown", "status": "demo sample", "latest_version": "v1", "source": "demo", "timezone": "Unconfirmed", "hours": "Hours not captured", "unresolved_unknowns": 7, "fields_changed": 0, "conflicts": 0, "notes": "", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (power_outage, water_leak): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "is_deliverable": false}]};
+    const data = {"generated_at": "2026-03-06T11:50:16.937477+00:00", "summary": {"deliverable_cases": 5, "ready_cases": 5, "extra_cases": 1, "total_unknowns": 1, "total_conflicts": 3}, "cases": [{"case_id": "case_001", "company_name": "Premier Fire Protection", "industry": "fire_protection", "status": "v2 ready", "latest_version": "v2", "source": "onboarding_call", "timezone": "America/Chicago", "hours": "Monday, Tuesday, Wednesday, Thursday, Friday | 07:30-17:00", "unresolved_unknowns": 0, "fields_changed": 6, "conflicts": 1, "notes": "If the caller is in actual physical danger or there is an active fire, instruct them to call 911 immediately.; Integration: ServiceTrade", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (active_sprinkler_leak, triggered_fire_alarm, suppression_system_discharge): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "business_hours_notes": "Major federal holidays are handled manually in Retell schedule settings.", "is_deliverable": true}, {"case_id": "case_002", "company_name": "arctic_hvac_services", "industry": "arctic_hvac_services", "status": "v2 ready", "latest_version": "v2", "source": "onboarding_form", "timezone": "America/Chicago", "hours": "Monday, Tuesday, Wednesday, Thursday, Friday | 08:00-17:30", "unresolved_unknowns": 0, "fields_changed": 5, "conflicts": 0, "notes": "Never route billing or payment questions to the on-call technician — even after hours.; If caller mentions a life-threatening situation (fire, gas smell), instruct them to call 911 immediately.; Do not promise specific technician arrival times unless dispatch confirms.; Integration: ServiceTrade", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (hvac_critical_failure, hvac_extreme_weather_failure): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "business_hours_notes": "Friday closes 30 minutes early. No holiday exceptions — managed manually.", "is_deliverable": true}, {"case_id": "case_003", "company_name": "Electra Electrical Services", "industry": "electra_electrical_services", "status": "v2 ready", "latest_version": "v2", "source": "onboarding_call", "timezone": "America/Denver", "hours": "Monday, Tuesday, Wednesday, Thursday, Friday | 07:30-17:00", "unresolved_unknowns": 1, "fields_changed": 5, "conflicts": 0, "notes": "For no-power calls, ask whether the caller checked the breaker panel and tried resetting it before escalating.; If the caller mentions carbon monoxide, tell them to leave the building immediately and call 911.", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (power_outage, electrical_fire, exposed_live_wires): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "business_hours_notes": "", "is_deliverable": true}, {"case_id": "case_004", "company_name": "Summit Sprinkler Systems", "industry": "Fire Protection (Wet/Dry Pipe Sprinkler Systems)", "status": "v2 ready", "latest_version": "v2", "source": "onboarding_call", "timezone": "America/Denver", "hours": "Monday, Tuesday, Wednesday, Thursday, Friday, Saturday | 07:00-17:00", "unresolved_unknowns": 0, "fields_changed": 6, "conflicts": 1, "notes": "If a caller mentions they are an attorney or uses the words litigation or lawsuit, transfer them to the office and say the team will assist directly.; Integration: FieldEdge", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (active_discharge_or_leak, dry_side_pressure_drop): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "business_hours_notes": "Saturday hours are for emergency service call pick-ups only.", "is_deliverable": true}, {"case_id": "case_005", "company_name": "Guardian Alarm & Security", "industry": "Electrical / Security Systems", "status": "v2 ready", "latest_version": "v2", "source": "onboarding_form", "timezone": "MST", "hours": "Monday, Tuesday, Wednesday, Thursday, Friday | 08:00-18:00", "unresolved_unknowns": 0, "fields_changed": 5, "conflicts": 1, "notes": "Never discuss pricing or provide cost estimates; Never confirm or deny whether a specific address is monitored; If caller mentions legal matter or litigation, transfer to office immediately; False alarm callers: walk through panel reset steps before transfer; Integration: ServiceTitan", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (active_fire_alarm, access_control_failure): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "business_hours_notes": "Arizona does not observe Daylight Saving Time — always MST", "is_deliverable": true}, {"case_id": "case_006", "company_name": "G&M Pressure Washing", "industry": "Unknown", "status": "demo sample", "latest_version": "v1", "source": "demo", "timezone": "Unconfirmed", "hours": "Hours not captured", "unresolved_unknowns": 7, "fields_changed": 0, "conflicts": 0, "notes": "", "after_hours": "After-hours flow: greet (closed) → identify purpose → confirm emergency → if emergency (power_outage, water_leak): collect name/phone/address → transfer to on-call → if transfer fails: apologise, assure <30 min callback → if non-emergency: collect info, confirm next-business-day callback → wrap up", "business_hours_notes": "", "is_deliverable": false}]};
 
     const metrics = [
       ["Deliverable Pairs", data.summary.deliverable_cases],
@@ -236,25 +304,25 @@
     const readinessItems = [
       {
         title: "Transcript + Form Coverage",
-        copy: (
-          "The n8n export checks for transcript-based onboarding first and falls "
-          "back to onboarding forms when a transcript is not present."
-        ),
+        copy:
+          "The n8n export checks for transcript-based onboarding first and falls " +
+          "back to onboarding forms when a transcript is not present.",
         pill: `${data.summary.ready_cases} cases ready`,
         kind: "ok"
       },
       {
         title: "Deliverable Integrity",
-        copy: (
-          "Placeholder schema text is stripped before merge, keeping committed "
-          "v2 memos and Retell drafts import-ready."
-        ),
+        copy:
+          "Placeholder schema text is stripped before merge, keeping committed " +
+          "v2 memos and Retell drafts import-ready.",
         pill: "Placeholder guardrails",
         kind: "demo"
       },
       {
         title: "Version Hygiene",
-        copy: "Superseded v1 emergency unknowns are retired when onboarding confirms a new emergency taxonomy.",
+        copy:
+          "Superseded v1 emergency unknowns are retired when onboarding confirms " +
+          "a new emergency taxonomy.",
         pill: `${data.summary.total_unknowns} unknowns left`,
         kind: data.summary.total_unknowns ? "warn" : "ok"
       },
@@ -262,8 +330,20 @@
 
     const metricRoot = document.getElementById("metrics");
     metrics.forEach(([label, value]) => {
-      const el = document.createElement("div");
-      el.className = "metric";
+      const buildPreview = (item) => {
+        if (item.notes) {
+          return { label: "Account Notes", value: item.notes };
+        }
+        if (item.business_hours_notes) {
+          return { label: "Hours Note", value: item.business_hours_notes };
+        }
+        return {
+          label: "After-hours flow",
+          value: item.after_hours || "No additional notes captured.",
+        };
+      };
+
+      const renderCaseCard = (item, root) => {
       el.innerHTML = `
         <div class="metric-label">${label}</div>
         <div class="metric-value">${value}</div>
@@ -271,30 +351,59 @@
       metricRoot.appendChild(el);
     });
 
+        const preview = buildPreview(item);
     const readinessRoot = document.getElementById("readiness");
     readinessItems.forEach((item) => {
       const row = document.createElement("div");
       row.className = "legend-row";
       row.innerHTML = `
         <div>
+              <div class="case-subtitle">${item.industry}</div>
           <div class="legend-title">${item.title}</div>
           <div class="legend-copy">${item.copy}</div>
         </div>
-        <span class="pill ${item.kind}">${item.pill}</span>
-      `;
-      readinessRoot.appendChild(row);
-    });
-
-    const spotlightCases = [...data.cases]
-      .sort(
-        (left, right) =>
+          <div class="chip-row">
+            <span class="chip"><strong>Source</strong>${sourceLabel}</span>
+            <span class="chip"><strong>Timezone</strong>${item.timezone}</span>
           (right.fields_changed + right.conflicts) -
-          (left.fields_changed + left.conflicts)
-      )
+          <div class="chip-row">
+            <span class="chip"><strong>Hours</strong>${item.hours}</span>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-label">Unknowns</div>
+              <div class="stat-value">${item.unresolved_unknowns}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Changes</div>
+              <div class="stat-value">${item.fields_changed}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Conflicts</div>
+              <div class="stat-value">${item.conflicts}</div>
+            </div>
+          </div>
+          <div class="summary-block">
+            <div class="summary-label">${preview.label}</div>
+            <div class="summary-value">${preview.value}</div>
       .slice(0, 3);
     const spotlightRoot = document.getElementById("spotlight");
-    spotlightCases.forEach((item) => {
-      const node = document.createElement("div");
+        root.appendChild(card);
+      };
+
+      const deliverableRoot = document.getElementById("deliverable-cases");
+      const extraRoot = document.getElementById("extra-cases");
+      const extraSection = document.getElementById("extra-section");
+
+      const deliverables = data.cases.filter((item) => item.is_deliverable);
+      const extras = data.cases.filter((item) => !item.is_deliverable);
+
+      deliverables.forEach((item) => renderCaseCard(item, deliverableRoot));
+      if (extras.length) {
+        extras.forEach((item) => renderCaseCard(item, extraRoot));
+      } else {
+        extraSection.innerHTML = '<div class="empty-state">No extra samples were found in the current outputs.</div>';
+      }
       node.className = "spotlight-item";
       node.innerHTML = `
         <h3>${item.company_name}</h3>

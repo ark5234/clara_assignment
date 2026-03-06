@@ -77,6 +77,7 @@ def _case_summary(case_dir: Path) -> dict:
         "conflicts": summary.get("conflicts_detected", 0),
         "notes": _clean_text(latest_memo.get("notes") or ""),
         "after_hours": latest_memo.get("after_hours_flow_summary") or "",
+        "business_hours_notes": ((latest_memo.get("business_hours") or {}).get("notes")) or "",
         "is_deliverable": has_v2,
     }
 
@@ -104,12 +105,21 @@ def _build_payload() -> dict:
 def _render_html(payload: dict) -> str:
     data_json = json.dumps(payload, ensure_ascii=False)
     generated = payload["generated_at"]
+    favicon = (
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E"
+        "%3Crect width='64' height='64' rx='16' fill='%230e7c86'/%3E"
+        "%3Ctext x='50%25' y='56%25' text-anchor='middle'"
+        " font-size='34' font-family='Arial,sans-serif' fill='white'%3E"
+        "C%3C/text%3E"
+        "%3C/svg%3E"
+    )
     return f"""<!DOCTYPE html>
 <html lang=\"en\">
 <head>
   <meta charset=\"UTF-8\" />
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />
   <title>Clara AI Demo Dashboard</title>
+  <link rel=\"icon\" href=\"{favicon}\" />
   <style>
     :root {{
       --ink: #162028;
@@ -237,13 +247,23 @@ def _render_html(payload: dict) -> str:
     .pill.ok {{ background: rgba(43, 122, 75, 0.12); color: var(--ok); }}
     .pill.warn {{ background: rgba(217, 164, 65, 0.18); color: var(--warn); }}
     .pill.demo {{ background: rgba(14, 124, 134, 0.12); color: var(--teal); }}
+    .section-head {{
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      margin-top: 26px;
+    }}
+    .section-head h2 {{ margin: 0; font-size: 24px; }}
+    .section-copy {{ color: var(--muted); font-size: 14px; max-width: 540px; }}
     .cases {{
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       margin-top: 18px;
+      align-items: start;
     }}
     .case-card {{
       border-radius: 22px;
-      padding: 18px;
+      padding: 20px;
       transform: translateY(16px);
       opacity: 0;
       animation: rise 560ms ease forwards;
@@ -266,23 +286,57 @@ def _render_html(payload: dict) -> str:
       letter-spacing: 0.12em;
     }}
     .case-name {{ margin: 6px 0 0; font-size: 22px; line-height: 1.05; }}
-    .case-meta {{ display: grid; gap: 10px; margin-top: 18px; }}
-    .case-meta div {{
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 14px;
+    .case-subtitle {{ margin-top: 10px; color: var(--muted); font-size: 15px; line-height: 1.45; }}
+    .chip-row {{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }}
+    .chip {{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(22, 32, 40, 0.05);
+      color: var(--ink);
     }}
-    .case-meta dt {{ color: var(--muted); }}
-    .case-meta dd {{ margin: 0; text-align: right; font-weight: 600; }}
-    .note {{
-      margin-top: 14px;
-      padding-top: 14px;
+    .chip strong {{ color: var(--muted); font-weight: 700; }}
+    .stat-grid {{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }}
+    .stat-card {{
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.38);
+      border: 1px solid var(--line);
+    }}
+    .stat-label {{ color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; }}
+    .stat-value {{ margin-top: 6px; font-size: 20px; font-weight: 700; }}
+    .summary-block {{
+      margin-top: 16px;
+      padding-top: 16px;
       border-top: 1px solid var(--line);
+    }}
+    .summary-label {{ color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; }}
+    .summary-value {{
+      margin-top: 8px;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 14px;
       line-height: 1.45;
-      min-height: 72px;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }}
+    .extra-section {{ margin-top: 10px; }}
+    .extra-section .cases {{ grid-template-columns: minmax(280px, 360px); }}
+    .empty-state {{
+      border-radius: 18px;
+      padding: 18px;
+      border: 1px dashed var(--line);
+      color: var(--muted);
     }}
     .spotlight {{ margin-top: 18px; }}
     .spotlight-item {{ padding: 12px 0; border-top: 1px solid var(--line); }}
@@ -297,6 +351,11 @@ def _render_html(payload: dict) -> str:
       .layout {{ grid-template-columns: 1fr; }}
       .shell {{ width: min(100% - 20px, 1180px); padding-top: 20px; }}
       .hero {{ padding: 22px; border-radius: 24px; }}
+      .stat-grid {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
+    }}
+    @media (max-width: 640px) {{
+      .cases {{ grid-template-columns: 1fr; }}
+      .stat-grid {{ grid-template-columns: 1fr 1fr; }}
     }}
   </style>
 </head>
@@ -325,7 +384,25 @@ def _render_html(payload: dict) -> str:
       </article>
     </section>
 
-    <section class=\"grid cases\" id=\"cases\"></section>
+    <section class=\"section-head\">
+      <div>
+        <h2>Deliverable Cases</h2>
+        <div class=\"section-copy\">
+          The five paired assignment cases, surfaced with only the most useful operational details.
+        </div>
+      </div>
+    </section>
+    <section class=\"grid cases\" id=\"deliverable-cases\"></section>
+
+    <section class=\"extra-section\" id=\"extra-section\">
+      <div class=\"section-head\">
+        <div>
+          <h2>Extra Samples</h2>
+          <div class=\"section-copy\">Additional demo-only cases kept separate from the scored deliverables.</div>
+        </div>
+      </div>
+      <section class=\"grid cases\" id=\"extra-cases\"></section>
+    </section>
   </main>
 
   <script>
@@ -342,25 +419,25 @@ def _render_html(payload: dict) -> str:
     const readinessItems = [
       {{
         title: "Transcript + Form Coverage",
-        copy: (
-          "The n8n export checks for transcript-based onboarding first and falls "
-          "back to onboarding forms when a transcript is not present."
-        ),
+        copy:
+          "The n8n export checks for transcript-based onboarding first and falls " +
+          "back to onboarding forms when a transcript is not present.",
         pill: `${{data.summary.ready_cases}} cases ready`,
         kind: "ok"
       }},
       {{
         title: "Deliverable Integrity",
-        copy: (
-          "Placeholder schema text is stripped before merge, keeping committed "
-          "v2 memos and Retell drafts import-ready."
-        ),
+        copy:
+          "Placeholder schema text is stripped before merge, keeping committed " +
+          "v2 memos and Retell drafts import-ready.",
         pill: "Placeholder guardrails",
         kind: "demo"
       }},
       {{
         title: "Version Hygiene",
-        copy: "Superseded v1 emergency unknowns are retired when onboarding confirms a new emergency taxonomy.",
+        copy:
+          "Superseded v1 emergency unknowns are retired when onboarding confirms " +
+          "a new emergency taxonomy.",
         pill: `${{data.summary.total_unknowns}} unknowns left`,
         kind: data.summary.total_unknowns ? "warn" : "ok"
       }},
@@ -368,8 +445,20 @@ def _render_html(payload: dict) -> str:
 
     const metricRoot = document.getElementById("metrics");
     metrics.forEach(([label, value]) => {{
-      const el = document.createElement("div");
-      el.className = "metric";
+      const buildPreview = (item) => {{
+        if (item.notes) {{
+          return {{ label: "Account Notes", value: item.notes }};
+        }}
+        if (item.business_hours_notes) {{
+          return {{ label: "Hours Note", value: item.business_hours_notes }};
+        }}
+        return {{
+          label: "After-hours flow",
+          value: item.after_hours || "No additional notes captured.",
+        }};
+      }};
+
+      const renderCaseCard = (item, root) => {{
       el.innerHTML = `
         <div class=\"metric-label\">${{label}}</div>
         <div class=\"metric-value\">${{value}}</div>
@@ -377,30 +466,59 @@ def _render_html(payload: dict) -> str:
       metricRoot.appendChild(el);
     }});
 
+        const preview = buildPreview(item);
     const readinessRoot = document.getElementById("readiness");
     readinessItems.forEach((item) => {{
       const row = document.createElement("div");
       row.className = "legend-row";
       row.innerHTML = `
         <div>
+              <div class="case-subtitle">${{item.industry}}</div>
           <div class=\"legend-title\">${{item.title}}</div>
           <div class=\"legend-copy\">${{item.copy}}</div>
         </div>
-        <span class=\"pill ${{item.kind}}\">${{item.pill}}</span>
-      `;
-      readinessRoot.appendChild(row);
-    }});
-
-    const spotlightCases = [...data.cases]
-      .sort(
-        (left, right) =>
+          <div class="chip-row">
+            <span class="chip"><strong>Source</strong>${{sourceLabel}}</span>
+            <span class="chip"><strong>Timezone</strong>${{item.timezone}}</span>
           (right.fields_changed + right.conflicts) -
-          (left.fields_changed + left.conflicts)
-      )
+          <div class="chip-row">
+            <span class="chip"><strong>Hours</strong>${{item.hours}}</span>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-label">Unknowns</div>
+              <div class="stat-value">${{item.unresolved_unknowns}}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Changes</div>
+              <div class="stat-value">${{item.fields_changed}}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Conflicts</div>
+              <div class="stat-value">${{item.conflicts}}</div>
+            </div>
+          </div>
+          <div class="summary-block">
+            <div class="summary-label">${{preview.label}}</div>
+            <div class="summary-value">${{preview.value}}</div>
       .slice(0, 3);
     const spotlightRoot = document.getElementById("spotlight");
-    spotlightCases.forEach((item) => {{
-      const node = document.createElement("div");
+        root.appendChild(card);
+      }};
+
+      const deliverableRoot = document.getElementById("deliverable-cases");
+      const extraRoot = document.getElementById("extra-cases");
+      const extraSection = document.getElementById("extra-section");
+
+      const deliverables = data.cases.filter((item) => item.is_deliverable);
+      const extras = data.cases.filter((item) => !item.is_deliverable);
+
+      deliverables.forEach((item) => renderCaseCard(item, deliverableRoot));
+      if (extras.length) {{
+        extras.forEach((item) => renderCaseCard(item, extraRoot));
+      }} else {{
+        extraSection.innerHTML = '<div class="empty-state">No extra samples were found in the current outputs.</div>';
+      }}
       node.className = "spotlight-item";
       node.innerHTML = `
         <h3>${{item.company_name}}</h3>
