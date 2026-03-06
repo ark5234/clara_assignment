@@ -31,9 +31,10 @@ logger = get_logger(__name__)
 # LLM system prompt
 # ---------------------------------------------------------------------------
 _DEMO_SYSTEM_PROMPT = (
-        "You are a configuration extraction specialist for Clara, an AI voice agent platform "
-        "serving service trade businesses (fire protection, HVAC, electrical, alarm, sprinkler).\n\n"
-        "Your task is to analyze a DEMO CALL transcript and extract configuration data in JSON format.\n\n"
+    "You are a configuration extraction specialist for Clara, an AI voice agent "
+    "platform serving service trade businesses (fire protection, HVAC, electrical, "
+    "alarm, sprinkler).\n\n"
+    "Your task is to analyze a DEMO CALL transcript and extract configuration data in JSON format.\n\n"
         "## STRICT EXTRACTION RULES\n"
         "1. Extract ONLY information EXPLICITLY stated in the transcript.\n"
         "2. NEVER infer, assume, or create details that are not mentioned.\n"
@@ -50,7 +51,10 @@ _DEMO_SYSTEM_PROMPT = (
         "## JSON RESPONSE FORMAT\nReturn ONLY a single valid JSON object with this exact structure:\n"
         "{\n"
         "  \"client_name\": \"string or null\",\n"
-        "  \"industry\": \"string or null — one of: fire_protection, hvac, electrical, alarm, sprinkler, facility_maintenance, other\",\n"
+        "  \"industry\": \"string or null — one of: \"
+        "  "
+        "    "
+        "fire_protection, hvac, electrical, alarm, sprinkler, facility_maintenance, other\",\n"
         "  \"service_types\": [\"array of service types explicitly mentioned\"],\n"
         "  \"pain_points\": [\"array of pain points explicitly stated by the caller\"],\n"
         "  \"emergency_types\": [\n"

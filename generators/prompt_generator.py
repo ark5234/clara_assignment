@@ -17,8 +17,8 @@ Design principles:
 - Every section is only rendered when data exists (no placeholder gaps)
 - Unknown/unconfirmed values are called out explicitly rather than silently skipped
 - The prompt structure follows the exact flows specified in the Clara assignment:
-  Business hours flow: greeting → purpose → collect info → transfer → fallback → wrap up
-  After-hours flow:    greeting → purpose → confirm emergency → route → wrap up
+        Business hours flow: greeting → purpose → collect info → transfer → fallback → wrap up
+        After-hours flow:    greeting → purpose → confirm emergency → route → wrap up
 """
 from __future__ import annotations
 
@@ -130,7 +130,10 @@ class PromptGenerator:
             "",
             "### Step 5 — Fallback if Transfer Fails",
             "If the transfer is not answered or fails, say:",
-            "\"I wasn't able to connect you with our team right now.\nYour information has been logged and someone will call you back shortly.\"",
+            (
+                "\"I wasn't able to connect you with our team right now.\n"
+                "Your information has been logged and someone will call you back shortly.\""
+            ),
             "",
             "### Step 6 — Wrap Up",
             "Ask: \"Is there anything else I can help you with today?\"",
@@ -172,7 +175,11 @@ class PromptGenerator:
             emergency_transfer,
             "",
             "**If transfer fails:**",
-            "\"I wasn't able to reach our on-call team at this moment. Your details have been recorded and someone will contact you as soon as possible. If this is a life-threatening emergency, please call 911.\"",
+            (
+                "\"I wasn't able to reach our on-call team at this moment. "
+                "Your details have been recorded and someone will contact you as soon as possible. "
+                "If this is a life-threatening emergency, please call 911.\""
+            ),
             "",
             "### Step 4B — If NON-EMERGENCY",
             "Say: \"I understand. Since our office is currently closed, I'll take your information and have our team follow up with you during business hours.\"",
