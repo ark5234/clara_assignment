@@ -341,7 +341,10 @@ class DemoProcessor(BaseProcessor):
         if integration:
             _add_if_missing(
                 f"integration.{integration.system}.constraints",
-                f"Are there any rules about which job types should or should not be automatically created in {integration.system}?",
+                (
+                    "Are there any rules about which job types should or should not "
+                    f"be automatically created in {integration.system}?"
+                ),
                 f"{integration.system} was mentioned but no specific constraints were stated.",
             )
 
