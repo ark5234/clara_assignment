@@ -90,15 +90,15 @@ def _build_payload() -> dict:
 
     deliverable_cases = [case for case in cases if case["is_deliverable"]]
     return {
-      "generated_at": datetime.now(timezone.utc).isoformat(),
-      "summary": {
-        "deliverable_cases": len(deliverable_cases),
-        "ready_cases": len(deliverable_cases),
-        "extra_cases": sum(1 for case in cases if not case["is_deliverable"]),
-        "total_unknowns": sum(case["unresolved_unknowns"] for case in deliverable_cases),
-        "total_conflicts": sum(case["conflicts"] for case in deliverable_cases),
-      },
-      "cases": cases,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "summary": {
+            "deliverable_cases": len(deliverable_cases),
+            "ready_cases": len(deliverable_cases),
+            "extra_cases": sum(1 for case in cases if not case["is_deliverable"]),
+            "total_unknowns": sum(case["unresolved_unknowns"] for case in deliverable_cases),
+            "total_conflicts": sum(case["conflicts"] for case in deliverable_cases),
+        },
+        "cases": cases,
     }
 
 
@@ -113,13 +113,13 @@ def _render_html(payload: dict) -> str:
         "C%3C/text%3E"
         "%3C/svg%3E"
     )
-    return f"""<!DOCTYPE html>
+    html = """<!DOCTYPE html>
 <html lang=\"en\">
 <head>
   <meta charset=\"UTF-8\" />
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />
   <title>Clara AI Demo Dashboard</title>
-  <link rel=\"icon\" href=\"{favicon}\" />
+  <link rel=\"icon\" href=\"__FAVICON__\" />
   <style>
     :root {{
       --ink: #162028;
@@ -135,7 +135,7 @@ def _render_html(payload: dict) -> str:
     * {{ box-sizing: border-box; }}
     body {{
       margin: 0;
-      font-family: Bahnschrift, "Aptos", "Segoe UI", sans-serif;
+      font-family: Bahnschrift, \"Aptos\", \"Segoe UI\", sans-serif;
       color: var(--ink);
       background:
         radial-gradient(circle at top left, rgba(14, 124, 134, 0.15), transparent 36%),
@@ -161,7 +161,7 @@ def _render_html(payload: dict) -> str:
       padding: 28px;
     }}
     .hero::after {{
-      content: "";
+      content: \"\";
       position: absolute;
       inset: auto -40px -40px auto;
       width: 220px;
@@ -369,7 +369,7 @@ def _render_html(payload: dict) -> str:
         It is designed for the video walkthrough, so the repo can show demo intake, onboarding
         updates, and v2 readiness without any hosted dependency.
       </p>
-      <div class=\"stamp\">Generated {generated}</div>
+      <div class=\"stamp\">Generated __GENERATED__</div>
       <div class=\"grid metrics\" id=\"metrics\"></div>
     </section>
 
@@ -406,7 +406,7 @@ def _render_html(payload: dict) -> str:
   </main>
 
   <script>
-    const data = {data_json};
+    const data = __DATA_JSON__;
 
     const metrics = [
       ["Deliverable Pairs", data.summary.deliverable_cases],
@@ -417,122 +417,46 @@ def _render_html(payload: dict) -> str:
     ];
 
     const readinessItems = [
-      {{
+      {
         title: "Transcript + Form Coverage",
         copy:
           "The n8n export checks for transcript-based onboarding first and falls " +
           "back to onboarding forms when a transcript is not present.",
-        pill: `${{data.summary.ready_cases}} cases ready`,
+        pill: `${data.summary.ready_cases} cases ready`,
         kind: "ok"
-      }},
-      {{
+      },
+      {
         title: "Deliverable Integrity",
         copy:
           "Placeholder schema text is stripped before merge, keeping committed " +
           "v2 memos and Retell drafts import-ready.",
         pill: "Placeholder guardrails",
         kind: "demo"
-      }},
-      {{
+      },
+      {
         title: "Version Hygiene",
         copy:
           "Superseded v1 emergency unknowns are retired when onboarding confirms " +
           "a new emergency taxonomy.",
-        pill: `${{data.summary.total_unknowns}} unknowns left`,
+        pill: `${data.summary.total_unknowns} unknowns left`,
         kind: data.summary.total_unknowns ? "warn" : "ok"
-      }},
+      },
     ];
 
-    const metricRoot = document.getElementById("metrics");
-    metrics.forEach(([label, value]) => {{
-      const buildPreview = (item) => {{
-        if (item.notes) {{
-          return {{ label: "Account Notes", value: item.notes }};
-        }}
-        if (item.business_hours_notes) {{
-          return {{ label: "Hours Note", value: item.business_hours_notes }};
-        }}
-        return {{
-          label: "After-hours flow",
-          value: item.after_hours || "No additional notes captured.",
-        }};
-      }};
+    const buildPreview = (item) => {
+      if (item.notes) {
+        return { label: "Account Notes", value: item.notes };
+      }
+      if (item.business_hours_notes) {
+        return { label: "Hours Note", value: item.business_hours_notes };
+      }
+      return {
+        label: "After-hours flow",
+        value: item.after_hours || "No additional notes captured.",
+      };
+    };
 
-      const renderCaseCard = (item, root) => {{
-      el.innerHTML = `
-        <div class=\"metric-label\">${{label}}</div>
-        <div class=\"metric-value\">${{value}}</div>
-      `;
-      metricRoot.appendChild(el);
-    }});
-
-        const preview = buildPreview(item);
-    const readinessRoot = document.getElementById("readiness");
-    readinessItems.forEach((item) => {{
-      const row = document.createElement("div");
-      row.className = "legend-row";
-      row.innerHTML = `
-        <div>
-              <div class="case-subtitle">${{item.industry}}</div>
-          <div class=\"legend-title\">${{item.title}}</div>
-          <div class=\"legend-copy\">${{item.copy}}</div>
-        </div>
-          <div class="chip-row">
-            <span class="chip"><strong>Source</strong>${{sourceLabel}}</span>
-            <span class="chip"><strong>Timezone</strong>${{item.timezone}}</span>
-          (right.fields_changed + right.conflicts) -
-          <div class="chip-row">
-            <span class="chip"><strong>Hours</strong>${{item.hours}}</span>
-          </div>
-          <div class="stat-grid">
-            <div class="stat-card">
-              <div class="stat-label">Unknowns</div>
-              <div class="stat-value">${{item.unresolved_unknowns}}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Changes</div>
-              <div class="stat-value">${{item.fields_changed}}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Conflicts</div>
-              <div class="stat-value">${{item.conflicts}}</div>
-            </div>
-          </div>
-          <div class="summary-block">
-            <div class="summary-label">${{preview.label}}</div>
-            <div class="summary-value">${{preview.value}}</div>
-      .slice(0, 3);
-    const spotlightRoot = document.getElementById("spotlight");
-        root.appendChild(card);
-      }};
-
-      const deliverableRoot = document.getElementById("deliverable-cases");
-      const extraRoot = document.getElementById("extra-cases");
-      const extraSection = document.getElementById("extra-section");
-
-      const deliverables = data.cases.filter((item) => item.is_deliverable);
-      const extras = data.cases.filter((item) => !item.is_deliverable);
-
-      deliverables.forEach((item) => renderCaseCard(item, deliverableRoot));
-      if (extras.length) {{
-        extras.forEach((item) => renderCaseCard(item, extraRoot));
-      }} else {{
-        extraSection.innerHTML = '<div class="empty-state">No extra samples were found in the current outputs.</div>';
-      }}
-      node.className = "spotlight-item";
-      node.innerHTML = `
-        <h3>${{item.company_name}}</h3>
-        <p>
-          ${{item.case_id}} moved to ${{item.latest_version.toUpperCase()}} via
-          ${{item.source}} with ${{item.fields_changed}} tracked field changes and
-          ${{item.conflicts}} flagged conflicts.
-        </p>
-      `;
-      spotlightRoot.appendChild(node);
-    }});
-
-    const casesRoot = document.getElementById("cases");
-    data.cases.forEach((item) => {{
+    const renderCaseCard = (item, root) => {
       const card = document.createElement("article");
       const statusClass = item.latest_version === "v2" ? "ok" : "warn";
       const sourceLabel = item.source === "onboarding_form"
@@ -540,34 +464,118 @@ def _render_html(payload: dict) -> str:
         : item.source === "onboarding_call"
           ? "call"
           : "demo";
+      const preview = buildPreview(item);
       card.className = "case-card";
       card.innerHTML = `
-        <div class=\"case-top\">
+        <div class="case-top">
           <div>
-            <div class=\"case-id\">${{item.case_id}}</div>
-            <h2 class=\"case-name\">${{item.company_name}}</h2>
+            <div class="case-id">${item.case_id}</div>
+            <h2 class="case-name">${item.company_name}</h2>
+            <div class="case-subtitle">${item.industry}</div>
           </div>
-          <span class=\"pill ${{statusClass}}\">${{item.status}}</span>
+          <span class="pill ${statusClass}">${item.status}</span>
         </div>
-        <div class=\"case-meta\">
-          <div><dt>Industry</dt><dd>${{item.industry}}</dd></div>
-          <div><dt>Source</dt><dd><span class=\"pill demo\">${{sourceLabel}}</span></dd></div>
-          <div><dt>Timezone</dt><dd>${{item.timezone}}</dd></div>
-          <div><dt>Hours</dt><dd>${{item.hours}}</dd></div>
-          <div><dt>Unknowns</dt><dd>${{item.unresolved_unknowns}}</dd></div>
-          <div><dt>Field Changes</dt><dd>${{item.fields_changed}}</dd></div>
-          <div><dt>Conflicts</dt><dd>${{item.conflicts}}</dd></div>
+        <div class="chip-row">
+          <span class="chip"><strong>Source</strong>${sourceLabel}</span>
+          <span class="chip"><strong>Timezone</strong>${item.timezone}</span>
         </div>
-        <div class=\"note\">
-          ${{item.after_hours || item.notes || "No additional notes captured."}}
+        <div class="chip-row">
+          <span class="chip"><strong>Hours</strong>${item.hours}</span>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Unknowns</div>
+            <div class="stat-value">${item.unresolved_unknowns}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Changes</div>
+            <div class="stat-value">${item.fields_changed}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Conflicts</div>
+            <div class="stat-value">${item.conflicts}</div>
+          </div>
+        </div>
+        <div class="summary-block">
+          <div class="summary-label">${preview.label}</div>
+          <div class="summary-value">${preview.value}</div>
         </div>
       `;
-      casesRoot.appendChild(card);
-    }});
+      root.appendChild(card);
+    };
+
+    const metricRoot = document.getElementById("metrics");
+    metrics.forEach(([label, value]) => {
+      const el = document.createElement("div");
+      el.className = "metric";
+      el.innerHTML = `
+        <div class="metric-label">${label}</div>
+        <div class="metric-value">${value}</div>
+      `;
+      metricRoot.appendChild(el);
+    });
+
+    const readinessRoot = document.getElementById("readiness");
+    readinessItems.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "legend-row";
+      row.innerHTML = `
+        <div>
+          <div class="legend-title">${item.title}</div>
+          <div class="legend-copy">${item.copy}</div>
+        </div>
+        <span class="pill ${item.kind}">${item.pill}</span>
+      `;
+      readinessRoot.appendChild(row);
+    });
+
+    const spotlightCases = [...data.cases]
+      .sort(
+        (left, right) =>
+          (right.fields_changed + right.conflicts) -
+          (left.fields_changed + left.conflicts)
+      )
+      .slice(0, 3);
+    const spotlightRoot = document.getElementById("spotlight");
+    spotlightCases.forEach((item) => {
+      const node = document.createElement("div");
+      node.className = "spotlight-item";
+      node.innerHTML = `
+        <h3>${item.company_name}</h3>
+        <p>
+          ${item.case_id} moved to ${item.latest_version.toUpperCase()} via
+          ${item.source} with ${item.fields_changed} tracked field changes and
+          ${item.conflicts} flagged conflicts.
+        </p>
+      `;
+      spotlightRoot.appendChild(node);
+    });
+
+    const deliverableRoot = document.getElementById("deliverable-cases");
+    const extraRoot = document.getElementById("extra-cases");
+    const extraSection = document.getElementById("extra-section");
+
+    const deliverables = data.cases.filter((item) => item.is_deliverable);
+    const extras = data.cases.filter((item) => !item.is_deliverable);
+
+    deliverables.forEach((item) => renderCaseCard(item, deliverableRoot));
+    if (extras.length) {
+      extras.forEach((item) => renderCaseCard(item, extraRoot));
+    } else {
+      extraSection.innerHTML =
+        '<div class="empty-state">No extra samples were found in the current outputs.</div>';
+    }
   </script>
 </body>
 </html>
 """
+    return (
+        html.replace("__FAVICON__", favicon)
+        .replace("__GENERATED__", generated)
+        .replace("{{", "{")
+        .replace("}}", "}")
+        .replace("__DATA_JSON__", data_json)
+    )
 
 
 def main() -> None:
