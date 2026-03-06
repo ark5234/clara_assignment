@@ -250,12 +250,27 @@ class DemoProcessor(BaseProcessor):
         # Start with what the LLM itself flagged
         unknowns: list[UnknownItem] = []
         for u in raw.get("questions_or_unknowns") or []:
+            item = u
+            if isinstance(item, str):
+                try:
+                    item = json.loads(item)
+                except Exception:
+                    # fallback: parse simple 'k: v' pairs
+                    parts = [p.strip() for p in item.split(";") if p.strip()]
+                    parsed = {}
+                    for p in parts:
+                        if ":" in p:
+                            k, v = p.split(":", 1)
+                            parsed[k.strip().lower()] = v.strip()
+                    item = parsed
+            if not isinstance(item, dict):
+                item = {}
             unknowns.append(
                 UnknownItem(
-                    field=u.get("field", "unknown"),
-                    question=u.get("question", ""),
-                    context=u.get("context"),
-                    priority=u.get("priority", "medium"),
+                    field=self._safe_str(item.get("field")) or "unknown",
+                    question=self._safe_str(item.get("question")) or "",
+                    context=self._safe_str(item.get("context")),
+                    priority=self._safe_str(item.get("priority")) or "medium",
                     source_stage="demo",
                 )
             )

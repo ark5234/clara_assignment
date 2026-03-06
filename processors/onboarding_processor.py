@@ -11,6 +11,7 @@ Key contract:
 from __future__ import annotations
 
 import json
+import re
 from copy import deepcopy
 from typing import Any
 
@@ -135,7 +136,23 @@ class OnboardingProcessor(BaseProcessor):
         )
         logger.debug(f"[{case_id}] Raw extraction: {json.dumps(raw, indent=2)[:500]}…")
 
-        v2 = self._merge(existing_config, raw, source)
+        # Sanitize top-level onboarding structure: convert JSON strings to objects
+        raw = self._sanitize_onboarding_raw(raw)
+
+        try:
+            v2 = self._merge(existing_config, raw, source)
+        except Exception as exc:
+            # Persist full traceback for debugging
+            import traceback, os
+            tb = traceback.format_exc()
+            base = os.path.join(os.getcwd(), "outputs", "logs")
+            os.makedirs(base, exist_ok=True)
+            fname = os.path.join(base, f"onboarding_error_{case_id}_{self._now_iso().replace(':','')}.log")
+            with open(fname, 'w', encoding='utf-8') as fh:
+                fh.write(tb)
+            logger.error(f"[{case_id}] Onboarding processing failed: {exc}")
+            logger.error(f"Traceback saved to {fname}")
+            raise
         logger.info(
             f"[{case_id}] v2 built — "
             f"{len(v2.change_log)} change(s), "
@@ -157,6 +174,21 @@ class OnboardingProcessor(BaseProcessor):
         v2.source = source
 
         change_log = list(v2.change_log)
+
+        # Defensive normalization: ensure existing unknown items use string fields
+        for u in v2.questions_or_unknowns:
+            try:
+                u.field = str(u.field) if u.field is not None else "unknown"
+            except Exception:
+                u.field = "unknown"
+            try:
+                u.question = self._safe_str(u.question) or ""
+            except Exception:
+                u.question = ""
+            try:
+                u.priority = self._safe_str(u.priority) or "medium"
+            except Exception:
+                u.priority = "medium"
 
         def _log(field_path: str, old: Any, new: Any, reason: str | None = None, conflict: bool = False) -> None:
             change_log.append(
@@ -239,31 +271,63 @@ class OnboardingProcessor(BaseProcessor):
             resolved_fields.add(f"integration.{system}.constraints")
 
         # ---- Special rules -----------------------------------------
-        special = onboarding.get("special_rules") or []
+        special_raw = onboarding.get("special_rules") or []
+        # Normalize special rules to strings
+        special = []
+        for s in special_raw:
+            if isinstance(s, str):
+                if s.strip():
+                    special.append(s.strip())
+            elif isinstance(s, dict):
+                # try to extract a readable string
+                txt = s.get("rule") or s.get("description") or None
+                if txt:
+                    special.append(self._safe_str(txt) or str(txt))
         if special:
             old_rules = list(v2.special_rules)
-            new_rules = list(set(old_rules) | set(special))
+            new_rules = list(dict.fromkeys(old_rules + special))
             if new_rules != old_rules:
                 _log("special_rules", old_rules, new_rules)
             v2.special_rules = new_rules
 
         # ---- Append any NEW unknowns from the onboarding call -------
-        existing_fields = {u.field for u in v2.questions_or_unknowns}
-        for u in onboarding.get("questions_or_unknowns") or []:
-            field = u.get("field", "unknown")
+        existing_fields = {str(u.field) for u in v2.questions_or_unknowns}
+        for u in (onboarding.get("questions_or_unknowns") or []):
+            # Normalize item: accept dict, JSON string, or simple text
+            item = u
+            if isinstance(item, str):
+                try:
+                    item = json.loads(item)
+                except Exception:
+                    # fallback: attempt simple parsing 'field:..., question:..., priority:...'
+                    parts = [p.strip() for p in re.split(r"[;,]", item) if p.strip()]
+                    parsed = {}
+                    for p in parts:
+                        if ":" in p:
+                            k, v = p.split(":", 1)
+                            parsed[k.strip().lower()] = v.strip()
+                    item = parsed
+            if not isinstance(item, dict):
+                item = {}
+
+            field = self._safe_str(item.get("field")) or "unknown"
             if field not in existing_fields:
                 v2.questions_or_unknowns.append(
                     UnknownItem(
                         field=field,
-                        question=u.get("question", ""),
-                        priority=u.get("priority", "medium"),
+                        question=self._safe_str(item.get("question")) or "",
+                        priority=self._safe_str(item.get("priority")) or "medium",
                         source_stage="onboarding",
                     )
                 )
 
         # ---- Mark resolved unknowns ---------------------------------
         for item in v2.questions_or_unknowns:
-            if item.field in resolved_fields:
+            try:
+                key = str(item.field)
+            except Exception:
+                key = ""
+            if key in resolved_fields:
                 item.resolved = True
 
         v2.change_log = change_log
@@ -275,11 +339,23 @@ class OnboardingProcessor(BaseProcessor):
     def _build_business_hours(self, raw: dict) -> BusinessHours:
         def _slot(day: str) -> TimeSlot:
             d = raw.get(day) or {}
-            return TimeSlot(
-                open=self._safe_str(d.get("open")),
-                close=self._safe_str(d.get("close")),
-                closed=bool(d.get("closed", False)),
-            )
+            # defensive: if day value is a string like 'closed', handle it
+            if isinstance(d, str):
+                if d.strip().lower().startswith("closed"):
+                    return TimeSlot(open=None, close=None, closed=True)
+                # fallback: attempt to parse a single open-close pair like '08:00-18:00'
+                m = re.match(r"(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})", d)
+                if m:
+                    return TimeSlot(open=self._safe_str(m.group(1)), close=self._safe_str(m.group(2)), closed=False)
+                return TimeSlot(open=self._safe_str(d), close=None, closed=False)
+            if isinstance(d, dict):
+                return TimeSlot(
+                    open=self._safe_str(d.get("open")),
+                    close=self._safe_str(d.get("close")),
+                    closed=bool(d.get("closed", False)),
+                )
+            # fallback
+            return TimeSlot(open=None, close=None, closed=False)
 
         return BusinessHours(
             timezone=self._safe_str(raw.get("timezone")),
@@ -297,22 +373,70 @@ class OnboardingProcessor(BaseProcessor):
     def _build_emergency_defs(self, raw_list: list[dict]) -> list[EmergencyDefinition]:
         defs = []
         for item in raw_list:
+            # item may be a dict or a JSON/string-encoded object
+            if isinstance(item, str):
+                try:
+                    item = json.loads(item)
+                except Exception:
+                    item = {"type": item}
+            # helper to coerce list-like fields to list[str]
+            def _list_of_str(x):
+                if x is None:
+                    return []
+                if isinstance(x, list):
+                    out = []
+                    for v in x:
+                        if isinstance(v, str):
+                            out.append(v)
+                        else:
+                            out.append(self._safe_str(v) or "")
+                    return [o for o in out if o]
+                if isinstance(x, str):
+                    # split on commas or semicolons
+                    parts = [p.strip() for p in re.split(r"[;,]", x) if p.strip()]
+                    return parts
+                return []
+
+            def _int_or_none(x):
+                if x is None:
+                    return None
+                if isinstance(x, int):
+                    return x
+                if isinstance(x, str):
+                    m = re.search(r"(\d+)", x)
+                    if m:
+                        try:
+                            return int(m.group(1))
+                        except Exception:
+                            return None
+                    return None
+                try:
+                    return int(x)
+                except Exception:
+                    return None
+
             target = None
-            if item.get("transfer_target_phone") or item.get("transfer_target_name"):
+            if isinstance(item, dict) and (item.get("transfer_target_phone") or item.get("transfer_target_name") or item.get("transfer_to") or item.get("transfer_target")):
                 target = RoutingTarget(
-                    name=self._safe_str(item.get("transfer_target_name")) or "On-call team",
-                    phone=self._safe_str(item.get("transfer_target_phone")),
+                    name=self._safe_str(item.get("transfer_target_name") or item.get("transfer_target") or item.get("transfer_to")) or "On-call team",
+                    phone=self._safe_str(item.get("transfer_target_phone") or item.get("transfer_to")),
                     type=self._safe_str(item.get("transfer_target_type")) or "phone_tree",
                 )
+
+            keywords = _list_of_str(item.get("keywords") or item.get("keywords_list") or [])
+            collect = _list_of_str(item.get("collect_before_transfer") or item.get("collect") or item.get("collect_fields") or ["name", "phone", "address"])
+            timeout = _int_or_none(item.get("transfer_timeout_seconds") or item.get("timeout"))
+            fallback = self._safe_str(item.get("fallback_on_timeout") or item.get("fallback"))
+
             defs.append(
                 EmergencyDefinition(
                     type=self._safe_str(item.get("type")) or "unknown",
                     description=self._safe_str(item.get("description")) or "",
-                    keywords=item.get("keywords") or [],
-                    collect_before_transfer=item.get("collect_before_transfer") or ["name", "phone", "address"],
+                    keywords=keywords,
+                    collect_before_transfer=collect or ["name", "phone", "address"],
                     transfer_target=target,
-                    transfer_timeout_seconds=item.get("transfer_timeout_seconds"),
-                    fallback_on_timeout=self._safe_str(item.get("fallback_on_timeout")),
+                    transfer_timeout_seconds=timeout,
+                    fallback_on_timeout=fallback,
                 )
             )
         return defs
@@ -339,6 +463,20 @@ class OnboardingProcessor(BaseProcessor):
         constraints = []
         system_name = existing.system if existing else None
         for item in raw_list:
+            # Item may be a dict or a simple string
+            if isinstance(item, str):
+                # treat string as system name
+                system_name = system_name or item
+                constraints.append(
+                    IntegrationConstraint(
+                        system=item or system_name or "unknown",
+                        rule_description="",
+                        job_types_excluded=[],
+                        job_types_auto_create=[],
+                    )
+                )
+                continue
+
             system_name = system_name or self._safe_str(item.get("system"))
             constraints.append(
                 IntegrationConstraint(
@@ -353,3 +491,101 @@ class OnboardingProcessor(BaseProcessor):
             enabled=True,
             constraints=constraints,
         )
+
+    def _normalize_form_alternates(self, raw: dict) -> dict:
+        """Normalize common alternate form keys/shapes into the canonical onboarding schema.
+
+        - 'emergency_types' -> 'emergency_definitions' with renamed fields
+        - compact 'integration' dict -> 'integration_constraints' list
+        - business_hours day string 'closed' -> canonical dict
+        """
+        out = deepcopy(raw)
+
+        # emergency_types -> emergency_definitions
+        if isinstance(out, dict) and "emergency_types" in out and "emergency_definitions" not in out:
+            defs = []
+            for it in out.pop("emergency_types") or []:
+                if isinstance(it, dict):
+                    item = dict(it)
+                    # rename known keys
+                    if "collect" in item:
+                        item["collect_before_transfer"] = item.pop("collect")
+                    if "transfer_to" in item:
+                        item["transfer_target_phone"] = item.pop("transfer_to")
+                    if "timeout" in item:
+                        item["transfer_timeout_seconds"] = item.pop("timeout")
+                    if "fallback" in item:
+                        item["fallback_on_timeout"] = item.pop("fallback")
+                    defs.append(item)
+                else:
+                    defs.append(it)
+            out["emergency_definitions"] = defs
+
+        # integration -> integration_constraints
+        if isinstance(out, dict) and "integration" in out and "integration_constraints" not in out:
+            integ = out.pop("integration")
+            if isinstance(integ, dict):
+                rule = integ.get("note") or integ.get("rule") or ""
+                system = integ.get("system") or "unknown"
+                auto_create = integ.get("auto_create_jobs")
+                job_auto = []
+                if isinstance(auto_create, bool) and auto_create:
+                    job_auto = []
+                out["integration_constraints"] = [
+                    {
+                        "system": system,
+                        "rule_description": rule,
+                        "job_types_excluded": [],
+                        "job_types_auto_create": job_auto,
+                    }
+                ]
+
+        # business_hours day string -> canonical dict
+        bh = out.get("business_hours")
+        if isinstance(bh, dict):
+            for day, val in list(bh.items()):
+                if isinstance(val, str) and val.strip().lower().startswith("closed"):
+                    bh[day] = {"open": None, "close": None, "closed": True}
+                # if day is dict but missing keys, ensure keys exist
+                elif isinstance(val, dict):
+                    if "open" not in val and "close" not in val:
+                        # keep as-is; further sanitization will handle types
+                        pass
+            out["business_hours"] = bh
+
+        return out
+
+    def _sanitize_onboarding_raw(self, raw: dict) -> Any:
+        """Attempt to normalize any string-encoded JSON or simple text entries.
+
+        This handles cases where LLM returns strings instead of structured objects.
+        """
+        # First, normalize common form alternates into canonical keys
+        try:
+            if isinstance(raw, dict):
+                raw = self._normalize_form_alternates(raw)
+        except Exception:
+            # non-fatal; proceed with original raw
+            pass
+
+        def _recurse(value):
+            # Convert string-encoded JSON to objects where reasonable
+            if isinstance(value, str):
+                s = value.strip()
+                if s.startswith("{") or s.startswith("["):
+                    try:
+                        parsed = json.loads(s)
+                        return _recurse(parsed)
+                    except Exception:
+                        pass
+                if ";" in s or ("," in s and "\n" not in s):
+                    parts = [p.strip() for p in re.split(r"[;,]", s) if p.strip()]
+                    return [_recurse(p) for p in parts]
+                return s
+            if isinstance(value, dict):
+                return {k: _recurse(v) for k, v in value.items()}
+            if isinstance(value, list):
+                return [_recurse(v) for v in value]
+            return value
+
+        return _recurse(raw)

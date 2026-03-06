@@ -165,6 +165,10 @@ class LLMClient:
             ],
         )
         raw_content: str = response.choices[0].message.content or "{}"
+        try:
+            self._save_raw_response(raw_content)
+        except Exception:
+            logger.debug("Failed to persist raw LLM response for debugging")
         return self._parse_json(raw_content)
 
     def _call_with_json_instruction(
@@ -187,16 +191,118 @@ class LLMClient:
             ],
         )
         raw_content: str = response.choices[0].message.content or "{}"
+        try:
+            self._save_raw_response(raw_content)
+        except Exception:
+            logger.debug("Failed to persist raw LLM response for debugging")
         return self._parse_json(raw_content)
+
+    @staticmethod
+    def _save_raw_response(raw: str) -> None:
+        """Save raw LLM responses to `outputs/logs/` for offline inspection."""
+        try:
+            import os
+            from datetime import datetime
+            import hashlib
+
+            base = os.path.join(os.getcwd(), "outputs", "logs")
+            os.makedirs(base, exist_ok=True)
+            ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            short = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:8]
+            filename = f"llm_raw_{ts}_{short}.txt"
+            path = os.path.join(base, filename)
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(raw)
+            logger.debug(f"Saved raw LLM response to {path}")
+        except Exception as exc:
+            logger.debug(f"Unable to save raw LLM response: {exc}")
 
     @staticmethod
     def _parse_json(raw: str) -> Dict[str, Any]:
         """Parse JSON from LLM output, stripping markdown fences if present."""
-        # Strip ```json ... ``` wrappers that some models add
-        stripped = re.sub(r"^```(?:json)?\s*", "", raw.strip())
-        stripped = re.sub(r"\s*```$", "", stripped)
+        def _extract_first_brace_block(text: str) -> str | None:
+            # Find the first balanced { ... } block in text
+            start = None
+            depth = 0
+            for i, ch in enumerate(text):
+                if ch == '{':
+                    if start is None:
+                        start = i
+                    depth += 1
+                elif ch == '}':
+                    if depth > 0:
+                        depth -= 1
+                        if depth == 0 and start is not None:
+                            return text[start : i + 1]
+            return None
+
+        def _try_load(s: str) -> Dict[str, Any]:
+            # Try to load JSON, with a last-ditch fix for trailing commas
+            try:
+                return json.loads(s)
+            except json.JSONDecodeError:
+                # Remove trailing commas before } or ]
+                fixed = re.sub(r",\s*(\}|\])", r"\1", s)
+                return json.loads(fixed)
+
+        def _normalize(obj: Any) -> Any:
+            # Recursively normalize values:
+            # - strings like 'null'/'none' -> None
+            # - strings like 'integer or null' -> None
+            # - purely numeric strings -> int
+            if isinstance(obj, dict):
+                return {k: _normalize(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [_normalize(v) for v in obj]
+            if isinstance(obj, str):
+                s = obj.strip()
+                lower = s.lower()
+                if lower in ("null", "none"):
+                    return None
+                if "integer or null" in lower or "int or null" in lower:
+                    return None
+                # common human-written placeholders
+                if lower in ("integer", "int", "number"):
+                    return None
+                # numeric strings => int
+                if re.fullmatch(r"-?\d+", s):
+                    try:
+                        return int(s)
+                    except Exception:
+                        return s
+                return s
+            return obj
+
+        raw = raw or ""
+        # 1) Strip common fenced code blocks and leading text
+        text = raw.strip()
+        # Remove a leading prose line like 'Here is the JSON response:'
+        # but only if the text does NOT start with a JSON object/array
+        if not text.lstrip().startswith(("{", "[")):
+            text = re.sub(r"^[^\n]*?\n+", "", text, count=1)
+        # Remove triple-backtick wrappers if present
+        if text.startswith("```") and text.endswith("```"):
+            inner = text[3:-3].strip()
+            # If inner starts with json tag, strip it
+            inner = re.sub(r"^json\s*", "", inner, flags=re.I)
+            text = inner
+
+        # 2) Try to parse the whole text first
         try:
-            return json.loads(stripped)
-        except json.JSONDecodeError as exc:
-            logger.error(f"LLM returned non-JSON content: {raw[:400]}")
-            raise ValueError(f"LLM response was not valid JSON: {exc}") from exc
+            parsed = _try_load(text)
+            return _normalize(parsed)
+        except Exception:
+            pass
+
+        # 3) Extract the first {...} block and try to parse it
+        block = _extract_first_brace_block(text)
+        if block:
+            try:
+                parsed = _try_load(block)
+                return _normalize(parsed)
+            except Exception:
+                logger.error(f"Failed parsing extracted JSON block from LLM output: {block[:400]}")
+
+        # 4) Give up with a clear error including a short excerpt
+        logger.error(f"LLM returned non-JSON content: {raw[:800]}")
+        raise ValueError("LLM response was not valid JSON or contained no JSON object")

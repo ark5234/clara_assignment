@@ -49,6 +49,35 @@ class FormProcessor(BaseProcessor):
 
         # Delegate merge logic to OnboardingProcessor (reuse identical merge path)
         merger = OnboardingProcessor(llm=self.llm)
+        # Sanitize form content (may contain JSON-encoded strings)
+        try:
+            form_dict = merger._sanitize_onboarding_raw(form_dict)
+        except Exception:
+            # Non-critical: proceed with original form_dict
+            pass
+
+        # Defensive: if sanitizer returned a non-dict (some forms are strings/lists),
+        # persist the raw payload for debugging and raise a clear error.
+        if not isinstance(form_dict, dict):
+            import os
+            import time
+            import json as _json
+
+            base = os.path.join(os.getcwd(), "outputs", "logs")
+            os.makedirs(base, exist_ok=True)
+            fname = os.path.join(base, f"bad_form_{case_id}_{int(time.time())}.json")
+            try:
+                to_dump = form_data if isinstance(form_data, dict) else form_dict
+                with open(fname, "w", encoding="utf-8") as fh:
+                    fh.write(_json.dumps(to_dump, indent=2, ensure_ascii=False))
+            except Exception:
+                # best-effort; ignore any file write errors
+                fname = "<failed to write bad form>"
+
+            raise ValueError(
+                f"[{case_id}] Sanitized form is not an object; saved raw form to {fname}"
+            )
+
         # Override _merge to use form_dict directly instead of calling the LLM
         v2 = merger._merge(existing_config, form_dict, source="onboarding_form")
 
